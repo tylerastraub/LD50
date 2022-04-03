@@ -8,7 +8,6 @@
 
 /**
  * TODO:
- * - Add enemy: Tank. Moves every other turn but does 2 damage to each tile
  * - Add enemy spawning
  * - Add death sound (falling)
  * - Add powerup sound for shove kills

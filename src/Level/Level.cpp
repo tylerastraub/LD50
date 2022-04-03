@@ -72,14 +72,18 @@ void Level::render(int xOffset, int yOffset) {
     }
 }
 
-// Fills level with all healthy ground tiles and a snow tile in the middle
+// Fills level with all healthy ground tiles and a few snow tiles here and there
 void Level::fileTilemapWithDefaultLayout() {
     for(size_t i = 0; i < _tilemap.size(); ++i) {
         _tilemap[i].setTileType(TileType::ICE);
         _tilemap[i].setTileStatus(TileStatus::HEALTHY);
     }
-    Tile startTile(TileType::SNOW, TileStatus::HEALTHY);
-    setTile(_levelWidth / 2, _levelHeight / 2, startTile);
+    Tile snowTile(TileType::SNOW, TileStatus::HEALTHY);
+    setTile(_levelWidth / 2, _levelHeight / 2, snowTile);
+    setTile(1, 1, snowTile);
+    setTile(_levelWidth - 2, 1, snowTile);
+    setTile(1, _levelHeight - 2, snowTile);
+    setTile(_levelWidth - 2, _levelHeight - 2, snowTile);
 }
 
 void Level::onTileMovedFrom(int x, int y, Entity* e, bool wasPushed) {
