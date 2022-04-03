@@ -29,9 +29,6 @@ public:
     virtual void render() = 0;
     // Note that if you are using the keyboard class, it is recommended to call the updateInputs() method in tick() instead
     virtual void handleKeyboardInput(SDL_Event e) {};
-    virtual void handleControllerButtonInput(SDL_Event e) {};
-    virtual void handleControllerAxisInput(SDL_Event e) {};
-    virtual void handleMouseInput(SDL_Event e) {};
 
     void setGameSize(int w, int h);
     void setNextState(State* state);

@@ -26,7 +26,6 @@ std::mt19937 RandomGen::randEng{(unsigned int) std::chrono::system_clock::now().
 void GameState::init() {
     // Input
     _keyboard = std::make_unique<Keyboard>();
-    _controller = std::make_unique<Controller>();
 
     // Level
     _level = std::make_unique<Level>(9, 9);
@@ -341,7 +340,6 @@ void GameState::tick(float timescale) {
 
     // Input updates
     _keyboard->updateInputs();
-    _controller->updateInputs();
 }
 
 void GameState::render() {
@@ -385,14 +383,6 @@ void GameState::render() {
     smallText->draw(4, 31);
 
     SDL_RenderPresent(getRenderer());
-}
-
-void GameState::handleControllerButtonInput(SDL_Event e) {
-    _controller->updateButtonInputs(e);
-}
-
-void GameState::handleControllerAxisInput(SDL_Event e) {
-    _controller->updateAxisInputs(e);
 }
 
 void GameState::startMovingState(int moveSpeed) {

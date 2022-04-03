@@ -56,23 +56,6 @@ bool Game::init() {
                     std::cout << "SDL_ttf could not be initialized! SDL_ttf Error: " << TTF_GetError() << std::endl;
                 }
                 else {
-                    // Gamepad initialization
-                    SDL_JoystickEventState(SDL_ENABLE);
-                    if(SDL_IsGameController(0)) {
-                        _controller = SDL_GameControllerOpen(0);
-                        if(_controller == NULL) {
-                            std::cout << "Error: Unable to open controller!" << std::endl;
-                        }
-                        else {
-                            std::cout << "Controller connected: " << SDL_GameControllerName(_controller) << std::endl;
-                            if(SDL_GameControllerAddMappingsFromFile("res/controllermappings.txt") == -1) {
-                                std::cout << "Error loading controller mappings! SDL_Error: " << SDL_GetError() << std::endl;
-                            }
-                        }
-                    }
-                    else {
-                        std::cout << "No controllers connected." << std::endl;
-                    }
                     // Resource loading
                     if(!loadResources()) {
                         std::cout << "Could not load resources!" << std::endl;
@@ -208,13 +191,6 @@ void Game::startGameLoop() {
                     else {
                         _currentState->handleKeyboardInput(e);
                     }
-                    break;
-                case SDL_CONTROLLERBUTTONDOWN:
-                case SDL_CONTROLLERBUTTONUP:
-                    _currentState->handleControllerButtonInput(e);
-                    break;
-                case SDL_CONTROLLERAXISMOTION:
-                    _currentState->handleControllerAxisInput(e);
                     break;
                 default:
                     break;

@@ -3,7 +3,6 @@
 
 #include "State.h"
 #include "Keyboard.h"
-#include "Controller.h"
 #include "Level.h"
 #include "Player.h"
 #include "CollisionDetector.h"
@@ -20,8 +19,6 @@ public:
     void tick(float timescale) override;
     void render() override;
     void handleKeyboardInput(SDL_Event e) override {};
-    void handleControllerButtonInput(SDL_Event e) override;
-    void handleControllerAxisInput(SDL_Event e) override;
 
 private:
     void startMovingState(int moveSpeed);
@@ -33,7 +30,6 @@ private:
     const int DEFAULT_SPAWN_SPEED = 1;
 
     std::unique_ptr<Keyboard> _keyboard = nullptr;
-    std::unique_ptr<Controller> _controller = nullptr;
 
     SDL_Point _renderOffset = {0, 0};
 

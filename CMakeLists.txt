@@ -27,6 +27,7 @@ set(SOURCE_INCLUDES
     ${PROJECT_SOURCE_DIR}/src/Engine/RandomUtilities
     ${PROJECT_SOURCE_DIR}/src/States
     ${PROJECT_SOURCE_DIR}/src/Entity
+    ${PROJECT_SOURCE_DIR}/src/Entity/Player
     ${PROJECT_SOURCE_DIR}/src/Entity/Enemies
     ${PROJECT_SOURCE_DIR}/src/Entity/Utilities
     ${PROJECT_SOURCE_DIR}/src/Level
@@ -35,7 +36,6 @@ set(SOURCE_INCLUDES
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/main.cpp
     ${PROJECT_SOURCE_DIR}/src/Engine/Game.cpp
-    ${PROJECT_SOURCE_DIR}/src/Engine/FileIO.cpp
     ${PROJECT_SOURCE_DIR}/src/Engine/CollisionDetector.cpp
     ${PROJECT_SOURCE_DIR}/src/Engine/Audio/Audio.cpp
     ${PROJECT_SOURCE_DIR}/src/Engine/Render/Spritesheet.cpp
@@ -43,12 +43,11 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/States/State.cpp
     ${PROJECT_SOURCE_DIR}/src/States/GameState.cpp
     ${PROJECT_SOURCE_DIR}/src/Engine/Input/Keyboard.cpp
-    ${PROJECT_SOURCE_DIR}/src/Engine/Input/Controller.cpp
-    ${PROJECT_SOURCE_DIR}/src/Engine/Input/Controls.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Entity.cpp
-    ${PROJECT_SOURCE_DIR}/src/Entity/Player.cpp
+    ${PROJECT_SOURCE_DIR}/src/Entity/Player/Player.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Enemies/Grunt.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Enemies/Bishop.cpp
+    ${PROJECT_SOURCE_DIR}/src/Entity/Enemies/Tank.cpp
     ${PROJECT_SOURCE_DIR}/src/Level/Level.cpp
     ${PROJECT_SOURCE_DIR}/src/Level/Tile.cpp
     ${PROJECT_SOURCE_DIR}/src/Item/Bomb.cpp

@@ -6,7 +6,7 @@
 #include <cute_sound.h>
 
 int main(int argv, char** args) {
-	Game game(StringID::windowTitle.c_str());
+	Game game(StringID::cWindowTitle.c_str());
     if(game.init()) {
         game.startGameLoop();
     }
