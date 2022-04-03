@@ -54,9 +54,17 @@ private:
 
     bool _shoveInAction = false;
     Entity* shovingEntity = nullptr;
-    bool _shoveKill = false;
+    int _shoveKills = 0;
 
     std::list<Bomb> _bombList;
+
+    // Scorekeeping
+    int _score = 0;
+    int _moves = 0;
+    const int SHOVE_SCORE = 100;
+    const int SHOVE_KILL_SCORE = 2000;
+    const int BOMB_KILL_SCORE = 3000;
+    const int REBUILD_SCORE = 1500;
 };
 
 #endif

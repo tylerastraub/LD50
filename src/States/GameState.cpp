@@ -8,10 +8,12 @@
 /**
  * TODO:
  * - Add enemy: Tank. Moves every other turn but does 2 damage to each tile
+ * - Add enemy spawning
  * - Add death sound (falling)
  * - Refine HUD more
  * - Gamify with score/moves taken
  * EXTRAS: (if have time)
+ * - Fix bug where bomb can be placed on damaged tile then stays after tile gets broken
  * - Enemy idea: Wildcard. Move in a random direction every turn
  * - Bishop not great at knowing when to shove player, could work on that
  * - Add bomb explosion sprite
@@ -143,11 +145,17 @@ void GameState::tick(float timescale) {
                         if(t.canBeDamaged()) t.setTileStatus(TileStatus::BROKEN);
                         t.setTileEvent(TileEvent::NOVAL);
                         _level->setTile(b->getPos().x, b->getPos().y, t);
+                        int combo = 1;
                         if(t.isEntityOnTile()) {
                             for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
                                 auto e = it->get();
                                 if(e->getPos().x == b->getPos().x && e->getPos().y == b->getPos().y) {
                                     e->hurt(3);
+                                    if(e->getHealth() == 0) {
+                                        t.setEntityOnTile(false);
+                                        _score += BOMB_KILL_SCORE * combo;
+                                        ++combo;
+                                    }
                                     break;
                                 }
                             }
@@ -160,7 +168,11 @@ void GameState::tick(float timescale) {
                                     auto e = it->get();
                                     if(e->getPos().x == p.x && e->getPos().y == p.y) {
                                         e->hurt(3);
-                                        if(e->getHealth() == 0) t.setEntityOnTile(false);
+                                        if(e->getHealth() == 0) {
+                                            t.setEntityOnTile(false);
+                                            _score += BOMB_KILL_SCORE * combo;
+                                            ++combo;
+                                        }
                                         break;
                                     }
                                 }
@@ -174,8 +186,11 @@ void GameState::tick(float timescale) {
                 }
             }
             // Shove kill reward
-            if(_shoveKill) {
-                _shoveKill = false;
+            if(_shoveKills > 0) {
+                for(int i = 1; i <= _shoveKills; ++i) {
+                    _score += SHOVE_KILL_SCORE * i;
+                }
+                _shoveKills = 0;
                 _player->setRebuildCount(_player->getNumOfRebuilds() + 1);
                 _player->setBombCount(_player->getNumOfBombs() + 1);
             }
@@ -199,6 +214,7 @@ void GameState::tick(float timescale) {
                     startMovingState(DEFAULT_MOVE_SPEED);
                     if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN) return;
                     tickBombTimers();
+                    ++_moves;
                 }
             }
             
@@ -220,6 +236,7 @@ void GameState::tick(float timescale) {
                 _level->addTileEvent(_player.get(), TileEvent::REBUILD);
                 _player->setRebuildCount(_player->getNumOfRebuilds() - 1);
                 getAudioPlayer()->playAudio(_player->getEntityId(), AudioSound::REBUILD, 0.9f);
+                _score += REBUILD_SCORE;
             }
         }
         // Entity tick
@@ -284,7 +301,10 @@ void GameState::tick(float timescale) {
                         }
                     }
                 }
+                int combo = 1;
                 for(auto se : shovedEntities) {
+                    _score += SHOVE_SCORE * combo;
+                    ++combo;
                     _collisionDetector.checkForLevelCollisions(se, _level.get(), true);
                     if(se->needsPathToPlayer()) {
                         if(se->getEntityType() == EntityType::BISHOP) {
@@ -299,7 +319,7 @@ void GameState::tick(float timescale) {
                     Tile t = _level->getTile(se->getPos().x, se->getPos().y);
                     if(t.getTileStatus() == TileStatus::BROKEN) {
                         se->hurt(99);
-                        _shoveKill = true;
+                        ++_shoveKills;
                     }
                     se->setMoveNextMovingState(true);
                 }
@@ -357,6 +377,12 @@ void GameState::render() {
     smallText->draw(4, 1);
     smallText->setString("rebuilds: " + std::to_string(_player->getNumOfRebuilds()));
     smallText->draw(4, 11);
+    std::string score = std::to_string(_score);
+    while(score.size() < 7) score.insert(score.begin(), '0');
+    smallText->setString("score: " + score);
+    smallText->draw(4, 21);
+    smallText->setString("moves: " + std::to_string(_moves));
+    smallText->draw(4, 31);
 
     SDL_RenderPresent(getRenderer());
 }
