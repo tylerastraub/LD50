@@ -13,6 +13,10 @@ public:
     void render(int xOffset, int yOffset) override;
 
 private:
+    const int MS_BETWEEN_WALK_FRAMES = 79;
+    const int MS_BETWEEN_IDLE_FRAMES = 249;
+    const int NUM_OF_WALK_FRAMES = 4;
+    const int NUM_OF_IDLE_FRAMES = 2;
 
 };
 

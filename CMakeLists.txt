@@ -27,6 +27,8 @@ set(SOURCE_INCLUDES
     ${PROJECT_SOURCE_DIR}/src/Engine/RandomUtilities
     ${PROJECT_SOURCE_DIR}/src/States
     ${PROJECT_SOURCE_DIR}/src/Entity
+    ${PROJECT_SOURCE_DIR}/src/Entity/Enemies
+    ${PROJECT_SOURCE_DIR}/src/Entity/Utilities
     ${PROJECT_SOURCE_DIR}/src/Level
     ${PROJECT_SOURCE_DIR}/src/Item
     )
@@ -45,7 +47,8 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/Engine/Input/Controls.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Entity.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Player.cpp
-    ${PROJECT_SOURCE_DIR}/src/Entity/Grunt.cpp
+    ${PROJECT_SOURCE_DIR}/src/Entity/Enemies/Grunt.cpp
+    ${PROJECT_SOURCE_DIR}/src/Entity/Enemies/Bishop.cpp
     ${PROJECT_SOURCE_DIR}/src/Level/Level.cpp
     ${PROJECT_SOURCE_DIR}/src/Level/Tile.cpp
     ${PROJECT_SOURCE_DIR}/src/Item/Bomb.cpp

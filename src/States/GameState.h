@@ -26,9 +26,11 @@ public:
 private:
     void startMovingState(int moveSpeed);
     void tickBombTimers();
+    void addEnemySpawn();
 
-    const int DEFAULT_MOVE_SPEED = 6;
+    const int DEFAULT_MOVE_SPEED = 4;
     const int DEFAULT_SHOVE_SPEED = 12;
+    const int DEFAULT_SPAWN_SPEED = 1;
 
     std::unique_ptr<Keyboard> _keyboard = nullptr;
     std::unique_ptr<Controller> _controller = nullptr;
@@ -43,10 +45,12 @@ private:
 
     float _moveTimer = 0;
     // 1 / _moveSpeed = time in seconds (for instance _moveSpeed = 4 means 0.25 sec move time)
-    int _moveSpeed = 6;
+    int _moveSpeed = 4;
 
     bool _gameOver = false;
+
     bool _inMovingState = false;
+    bool _spawnEnemy = false;
 
     bool _shoveInAction = false;
     Entity* shovingEntity = nullptr;

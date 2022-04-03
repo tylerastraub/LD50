@@ -1,24 +1,24 @@
 #include "GameState.h"
 #include "RandomGen.h"
 #include "Grunt.h"
+#include "Bishop.h"
 
 #include <chrono>
 
 /**
  * TODO:
- * - Start adding enemies
- * - Need to think of some sort of combat system
- * - Do player assets
+ * - Add more enemies
+ * - Enemy idea: Bishop. Moves only diagonally (and only shoves diagonally)
+ * - Enemy idea: Tank. Moves every other turn but does 2 damage to each tile
+ * - Enemy idea: Wildcard. Move in a random direction every turn
+ * - Add death sound (falling)
+ * - Add falling effect (shrink sprite?)
+ * - Refine HUD more
+ * - Gamify with score/moves taken
+ * - Add bomb explosion sprite
+ * - Can experiment with using arrows to move direction then pressing space to actually move... would make shove better (but maybe too good?)
+ * - Add water lines (if have time add them around iceberg too)
  * - Come up with cool level designs if have time (need to finalize level size first)
- * 
- * IDEAS:
- * - Could add bridge building ability which gains recharges from pushing enemies off - adds
- * way to keep going but adds risk of having to get right next to enemy to be able to push.
- * - Can also add bombs which destroy tile it's on completely but kills enemies within 1 tile of it.
- * Maybe also damages all tiles around it as well?
- * - Could add snow tile that never breaks but is always on its own so you can't endlessly step on it
- * - Should add border to ice then make it iceberg over a lake
- * - Probably should give each ice tile only 2 hp instead of the 3 hp it currently has
  */
 
 std::mt19937 RandomGen::randEng{(unsigned int) std::chrono::system_clock::now().time_since_epoch().count()};
@@ -48,18 +48,31 @@ void GameState::init() {
     _entityList.push_back(std::make_unique<Grunt>());
     _entityList.back()->setPos(7, 8);
     _entityList.back()->setLastPos(7, 8);
-     _entityList.back()->setRenderPos(7 * _level->getTileSize(), 8 * _level->getTileSize());
+    _entityList.back()->setRenderPos(7 * _level->getTileSize(), 8 * _level->getTileSize());
+    _entityList.back()->setAudioPlayer(getAudioPlayer());
+    _entityList.push_back(std::make_unique<Bishop>());
+    _entityList.back()->setPos(2, 2);
+    _entityList.back()->setLastPos(2, 2);
+    _entityList.back()->setRenderPos(2 * _level->getTileSize(), 2 * _level->getTileSize());
     _entityList.back()->setAudioPlayer(getAudioPlayer());
 
     // Spritesheet and other init stuff for entities
     for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
         it->get()->setPlayerPos(_player->getPos());
         if(it->get()->needsPathToPlayer()) {
-            it->get()->setPathToPlayer(_collisionDetector.breadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get()));
+            if(it->get()->getEntityType() == EntityType::BISHOP) {
+                it->get()->setPathToPlayer(_collisionDetector.diagonalBreadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get(), it->get()->avoidsHazards()));
+            }
+            else {
+                it->get()->setPathToPlayer(_collisionDetector.breadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get(), it->get()->avoidsHazards()));
+            }
         }
         switch(it->get()->getEntityType()) {
             case EntityType::GRUNT:
                 it->get()->setSpritesheet(getSpritesheet("GRUNT"));
+                break;
+            case EntityType::BISHOP:
+                it->get()->setSpritesheet(getSpritesheet("BISHOP"));
                 break;
         }
     }
@@ -107,6 +120,13 @@ void GameState::tick(float timescale) {
             _player->setMoveNextMovingState(true);
             startMovingState(DEFAULT_SHOVE_SPEED);
         }
+        else if(_spawnEnemy &&
+                !_inMovingState) {
+            // Spawn enemy
+            _spawnEnemy = false;
+            addEnemySpawn();
+            startMovingState(DEFAULT_SPAWN_SPEED);
+        }
         // Post-moving state actions
         else if(!_inMovingState) {
             // Bomb tick
@@ -151,6 +171,7 @@ void GameState::tick(float timescale) {
             if(_shoveKill) {
                 _shoveKill = false;
                 _player->setRebuildCount(_player->getNumOfRebuilds() + 1);
+                _player->setBombCount(_player->getNumOfBombs() + 1);
             }
         }
     }
@@ -222,25 +243,61 @@ void GameState::tick(float timescale) {
                 }
                 // Entity moves based on old player path so that they're not insanely hard to evade
                 if(e->needsPathToPlayer()) {
-                    auto path = _collisionDetector.breadthFirstSearch(e->getPos(), _player->getPos(), _level.get());
-                    e->setPathToPlayer(path);
+                    if(e->getEntityType() == EntityType::BISHOP) {
+                        auto path = _collisionDetector.diagonalBreadthFirstSearch(e->getPos(), _player->getPos(), _level.get(), e->avoidsHazards());
+                        e->setPathToPlayer(path);
+                    }
+                    else {
+                        auto path = _collisionDetector.breadthFirstSearch(e->getPos(), _player->getPos(), _level.get(), e->avoidsHazards());
+                        e->setPathToPlayer(path);
+                    }
                 }
             }
             // Entity event checking
             Tile t = _level->getTile(e->getPos().x, e->getPos().y);
+            // Entity gets pushed
             if(t.getTileEvent() == TileEvent::PUSH) {
-                e->setDelta(e->getPos().x - _player->getPos().x, e->getPos().y - _player->getPos().y);
-                _collisionDetector.checkForLevelCollisions(e, _level.get());
-                e->setMoveNextMovingState(true);
-                startMovingState(DEFAULT_SHOVE_SPEED);
-                if(e->needsPathToPlayer()) {
-                    auto path = _collisionDetector.breadthFirstSearch(e->getPos(), _player->getPos(), _level.get());
-                    e->setPathToPlayer(path);
+                int dx = e->getPos().x - _player->getPos().x;
+                int dy = e->getPos().y - _player->getPos().y;
+                SDL_Point nextPos = {e->getPos().x + dx, e->getPos().y + dy};
+                std::vector<Entity*> shovedEntities;
+                shovedEntities.push_back(e);
+                e->setDelta(dx, dy);
+                while(_level->getTile(nextPos.x, nextPos.y).isEntityOnTile()) {
+                    // Again horribly unoptimized but we don't got much time
+                    for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
+                        Entity* se = it->get();
+                        if(se == e) continue;
+                        if(se->getPos().x == nextPos.x && se->getPos().y == nextPos.y) {
+                            shovedEntities.push_back(se);
+                            se->setDelta(dx, dy);
+                            Tile t = _level->getTile(se->getPos().x, se->getPos().y);
+                            t.setEntityOnTile(false);
+                            _level->setTile(se->getPos().x, se->getPos().y, t);
+                            nextPos = {se->getPos().x + dx, se->getPos().y + dy};
+                        }
+                    }
                 }
-                Tile t = _level->getTile(e->getPos().x, e->getPos().y);
-                t.damageTile(e->getWeight() + 1);
-                _level->setTile(e->getPos().x, e->getPos().y, t);
-                if(e->getHealth() == 0) _shoveKill = true;
+                for(auto se : shovedEntities) {
+                    _collisionDetector.checkForLevelCollisions(se, _level.get());
+                    if(se->needsPathToPlayer()) {
+                        if(se->getEntityType() == EntityType::BISHOP) {
+                            auto path = _collisionDetector.diagonalBreadthFirstSearch(se->getPos(), _player->getPos(), _level.get(), se->avoidsHazards());
+                            se->setPathToPlayer(path);
+                        }
+                        else {
+                            auto path = _collisionDetector.breadthFirstSearch(se->getPos(), _player->getPos(), _level.get(), se->avoidsHazards());
+                            se->setPathToPlayer(path);
+                        }
+                    }
+                    Tile t = _level->getTile(se->getPos().x, se->getPos().y);
+                    t.damageTile(se->getWeight() + 1);
+                    if(t.getTileStatus() == TileStatus::BROKEN) se->hurt(99);
+                    _level->setTile(se->getPos().x, se->getPos().y, t);
+                    if(se->getHealth() == 0) _shoveKill = true;
+                    se->setMoveNextMovingState(true);
+                }
+                startMovingState(DEFAULT_SHOVE_SPEED);
             }
         }
 
@@ -321,4 +378,8 @@ void GameState::tickBombTimers() {
     for(auto b = _bombList.begin(); b != _bombList.end(); ++b) {
         b->tickTimer();
     }
+}
+
+void GameState::addEnemySpawn() {
+    // TODO: enemy spawn stuff
 }

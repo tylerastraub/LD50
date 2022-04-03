@@ -66,11 +66,14 @@ void Entity::move(std::vector<SDL_Point> path) {
             _currentDirection = Direction::EAST;
         }
     }
-    else if(dy < 0) {
-        _currentDirection = Direction::NORTH;
-    }
-    else if(dy > 0) {
-        _currentDirection = Direction::SOUTH;
+    else if(dy != 0) {
+        std::cout << "Entity Type " << _type << " with dy " << dy << std::endl;
+        if(dy < 0) {
+            _currentDirection = Direction::NORTH;
+        }
+        else if(dy > 0) {
+            _currentDirection = Direction::SOUTH;
+        }
     }
 }
 
@@ -243,4 +246,8 @@ bool Entity::requestPush() {
 
 bool Entity::moveNextMovingState() {
     return _moveNextMovingState;
+}
+
+bool Entity::avoidsHazards() {
+    return _avoidsHazards;
 }

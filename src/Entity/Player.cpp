@@ -7,10 +7,22 @@ Player::Player() {
 void Player::tick(float timescale) {
     handleInput();
 
-    if(_left && !_right && !_up && !_down) move(Direction::WEST);
-    if(_right && !_left && !_up && !_down) move(Direction::EAST);
-    if(_up && !_down && !_left && !_right) move(Direction::NORTH); 
-    if(_down && !_up && !_left && !_right) move(Direction::SOUTH);
+    if(_left && !_right && !_up && !_down) {
+        move(Direction::WEST);
+        setCurrentDirection(Direction::WEST);
+    }
+    if(_right && !_left && !_up && !_down) {
+        move(Direction::EAST);
+        setCurrentDirection(Direction::EAST);
+    }
+    if(_up && !_down && !_left && !_right) {
+        move(Direction::NORTH); 
+        setCurrentDirection(Direction::NORTH);
+    }
+    if(_down && !_up && !_left && !_right) {
+        move(Direction::SOUTH);
+        setCurrentDirection(Direction::SOUTH);
+    }
 }
 
 void Player::onMove() {
@@ -19,9 +31,36 @@ void Player::onMove() {
 
 void Player::render(int xOffset, int yOffset) {
     Spritesheet* ss = getSpritesheet();
-    ss->setIsAnimated(false);
-    ss->setIsLooped(false);
-    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset);
+    int yIndex = 0;
+    int xIndex = 0;
+    bool spriteFlip = (getCurrentDirection() == Direction::WEST);
+    if(moveNextMovingState()) {
+        xIndex = SDL_GetTicks() / MS_BETWEEN_WALK_FRAMES % NUM_OF_WALK_FRAMES;
+        if(getCurrentDirection() == Direction::SOUTH) {
+            yIndex = 3;
+        }
+        else if(getCurrentDirection() == Direction::EAST || getCurrentDirection() == Direction::WEST) {
+            yIndex = 4;
+        }
+        else if(getCurrentDirection() == Direction::NORTH) {
+            yIndex = 5;
+        }
+    }
+    else {
+        xIndex = SDL_GetTicks() / MS_BETWEEN_IDLE_FRAMES % NUM_OF_IDLE_FRAMES;
+        if(getCurrentDirection() == Direction::SOUTH) {
+            yIndex = 0;
+        }
+        else if(getCurrentDirection() == Direction::EAST || getCurrentDirection() == Direction::WEST) {
+            yIndex = 1;
+        }
+        else if(getCurrentDirection() == Direction::NORTH) {
+            yIndex = 2;
+        }
+    }
+    ss->setTileIndex(xIndex, yIndex);
+    // While SDL_RendererFlip is technically an enum, we can get the values we want with the spriteFlip bool
+    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset, (SDL_RendererFlip) spriteFlip);
 }
 
 void Player::handleInput() {

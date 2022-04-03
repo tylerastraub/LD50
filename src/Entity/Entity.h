@@ -15,6 +15,7 @@ namespace EntityType {
         NOVAL = -1,
         PLAYER,
         GRUNT,
+        BISHOP,
     };
 };
 
@@ -69,6 +70,7 @@ public:
     SDL_Point getPosFacing();
     bool requestPush();
     bool moveNextMovingState();
+    bool avoidsHazards();
 
 protected:
     void setEntityType(EntityType::EntityType type);
@@ -78,6 +80,8 @@ protected:
     SDL_Point _playerPos = {-10, -10,};
 
     bool _push = false;
+
+    bool _avoidsHazards = false;
 
 private:
     static int entityIdProvider;

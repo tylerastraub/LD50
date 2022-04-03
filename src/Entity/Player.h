@@ -23,6 +23,11 @@ public:
     int getNumOfRebuilds();
 
 private:
+    const int MS_BETWEEN_WALK_FRAMES = 89;
+    const int MS_BETWEEN_IDLE_FRAMES = 249;
+    const int NUM_OF_WALK_FRAMES = 4;
+    const int NUM_OF_IDLE_FRAMES = 2;
+
     bool _left = false;
     bool _right = false;
     bool _up = false;
