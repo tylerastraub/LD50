@@ -7,6 +7,7 @@
 #include "Level.h"
 #include "Player.h"
 #include "CollisionDetector.h"
+#include "Bomb.h"
 
 #include <list>
 
@@ -24,6 +25,7 @@ public:
 
 private:
     void startMovingState(int moveSpeed);
+    void tickBombTimers();
 
     const int DEFAULT_MOVE_SPEED = 6;
     const int DEFAULT_SHOVE_SPEED = 12;
@@ -48,6 +50,9 @@ private:
 
     bool _shoveInAction = false;
     Entity* shovingEntity = nullptr;
+    bool _shoveKill = false;
+
+    std::list<Bomb> _bombList;
 };
 
 #endif

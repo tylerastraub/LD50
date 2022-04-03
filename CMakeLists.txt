@@ -28,6 +28,7 @@ set(SOURCE_INCLUDES
     ${PROJECT_SOURCE_DIR}/src/States
     ${PROJECT_SOURCE_DIR}/src/Entity
     ${PROJECT_SOURCE_DIR}/src/Level
+    ${PROJECT_SOURCE_DIR}/src/Item
     )
 set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/main.cpp
@@ -47,6 +48,7 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/Entity/Grunt.cpp
     ${PROJECT_SOURCE_DIR}/src/Level/Level.cpp
     ${PROJECT_SOURCE_DIR}/src/Level/Tile.cpp
+    ${PROJECT_SOURCE_DIR}/src/Item/Bomb.cpp
     )
 
 if(WIN32)

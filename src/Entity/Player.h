@@ -14,8 +14,13 @@ public:
 
     void handleInput();
 
+    void setBombCount(int numOfBombs);
+    void setRebuildCount(int numOfRebuilds);
+
     bool requestBomb();
     bool requestRebuild();
+    int getNumOfBombs();
+    int getNumOfRebuilds();
 
 private:
     bool _left = false;
@@ -25,6 +30,9 @@ private:
     
     bool _bomb = false;
     bool _rebuild = false;
+
+    int _numOfBombs = 3;
+    int _numOfRebuilds = 3;
 };
 
 #endif

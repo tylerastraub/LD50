@@ -35,10 +35,26 @@ void Player::handleInput() {
     _rebuild = (k->isKeyPressed(SDL_SCANCODE_C) || k->isKeyPressed(SDL_SCANCODE_P));
 }
 
+void Player::setBombCount(int numOfBombs) {
+    _numOfBombs = numOfBombs;
+}
+
+void Player::setRebuildCount(int numOfRebuilds) {
+    _numOfRebuilds = numOfRebuilds;
+}
+
 bool Player::requestBomb() {
     return _bomb;
 }
 
 bool Player::requestRebuild() {
     return _rebuild;
+}
+
+int Player::getNumOfBombs() {
+    return _numOfBombs;
+}
+
+int Player::getNumOfRebuilds() {
+    return _numOfRebuilds;
 }

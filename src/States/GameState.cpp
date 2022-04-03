@@ -8,9 +8,8 @@
  * TODO:
  * - Start adding enemies
  * - Need to think of some sort of combat system
- * - Also probably some way to repair holes (or make map bigger)
  * - Do player assets
- * - Come up with cool level designs (need to finalize level size first)
+ * - Come up with cool level designs if have time (need to finalize level size first)
  * 
  * IDEAS:
  * - Could add bridge building ability which gains recharges from pushing enemies off - adds
@@ -96,7 +95,10 @@ void GameState::tick(float timescale) {
                 e->setMoveNextMovingState(_inMovingState);
             }
         }
-        if(_shoveInAction && !_inMovingState && _player->getHealth() != 0) {
+        if(_shoveInAction &&
+           !_inMovingState &&
+           _player->getHealth() != 0 &&
+           _level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() != TileStatus::BROKEN) {
             _shoveInAction = false;
             if(shovingEntity == nullptr) return;
             _player->setDelta(_player->getPos().x - shovingEntity->getPos().x, _player->getPos().y - shovingEntity->getPos().y);
@@ -104,6 +106,52 @@ void GameState::tick(float timescale) {
             shovingEntity->completePushRequest();
             _player->setMoveNextMovingState(true);
             startMovingState(DEFAULT_SHOVE_SPEED);
+        }
+        // Post-moving state actions
+        else if(!_inMovingState) {
+            // Bomb tick
+            if(!_bombList.empty()) {
+                for(auto b = _bombList.begin(); b != _bombList.end(); ++b) {
+                    // This is so hilariously unoptimized but we're not really scaling so YOLO
+                    if(b->bombExploded()) {
+                        Tile t = _level->getTile(b->getPos().x, b->getPos().y);
+                        if(t.canBeDamaged()) t.setTileStatus(TileStatus::BROKEN);
+                        t.setTileEvent(TileEvent::NOVAL);
+                        _level->setTile(b->getPos().x, b->getPos().y, t);
+                        if(t.isEntityOnTile()) {
+                            for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
+                                auto e = it->get();
+                                if(e->getPos().x == b->getPos().x && e->getPos().y == b->getPos().y) {
+                                    e->hurt(3);
+                                    break;
+                                }
+                            }
+                        }
+                        for(auto p : b->getSurroundingPoints()) {
+                            t = _level->getTile(p.x, p.y);
+                            if(t.canBeDamaged()) t.damageTile(1);
+                            _level->setTile(p.x, p.y, t);
+                            if(t.isEntityOnTile()) {
+                                for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
+                                    auto e = it->get();
+                                    if(e->getPos().x == p.x && e->getPos().y == p.y) {
+                                        e->hurt(3);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        b = _bombList.erase(b);
+                        --b;
+                        getAudioPlayer()->playAudio(_player->getEntityId(), AudioSound::BOMB_BLOW, 1.f);
+                    }
+                }
+            }
+            // Shove kill reward
+            if(_shoveKill) {
+                _shoveKill = false;
+                _player->setRebuildCount(_player->getNumOfRebuilds() + 1);
+            }
         }
     }
     else {
@@ -122,19 +170,29 @@ void GameState::tick(float timescale) {
                 if(playerMove) {
                     _player->setMoveNextMovingState(true);
                     startMovingState(DEFAULT_MOVE_SPEED);
+                    if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN) return;
+                    tickBombTimers();
                 }
             }
             
             if(_player->requestPush()) {
                 _level->addTileEvent(_player.get(), TileEvent::PUSH);
             }
-            // TODO: make sure player actually has bombs
-            else if(_player->requestBomb()) {
+            else if(_player->requestBomb() &&
+                    _player->getNumOfBombs() > 0 &&
+                    _level->getTile(_player->getPos().x, _player->getPos().y).getTileEvent() != TileEvent::BOMB) {
                 _level->addTileEvent(_player.get(), TileEvent::BOMB);
+                _player->setBombCount(_player->getNumOfBombs() - 1);
+                _bombList.push_back(Bomb(_player->getPos().x, _player->getPos().y, 3));
+                _bombList.back().setSpritesheet(getSpritesheet("BOMB"));
+                getAudioPlayer()->playAudio(_player->getEntityId(), AudioSound::PLACE_BOMB, 1.f);
             }
-            // TODO: make sure player can actually rebuild
-            else if(_player->requestRebuild()) {
+            else if(_player->requestRebuild() &&
+                    _player->getNumOfRebuilds() > 0 &&
+                    _level->getTile(_player->getPosFacing().x, _player->getPosFacing().y).getTileStatus() == TileStatus::BROKEN) {
                 _level->addTileEvent(_player.get(), TileEvent::REBUILD);
+                _player->setRebuildCount(_player->getNumOfRebuilds() - 1);
+                getAudioPlayer()->playAudio(_player->getEntityId(), AudioSound::REBUILD, 0.9f);
             }
         }
         // Entity tick
@@ -157,6 +215,7 @@ void GameState::tick(float timescale) {
                     e->setMoveNextMovingState(!(oldPos.x == e->getPos().x &&
                         oldPos.y == e->getPos().y));
                 }
+                // Entity pushes player
                 if(e->requestPush() && e->getPosFacing().x == _player->getPos().x && e->getPosFacing().y == _player->getPos().y) {
                     _shoveInAction = true;
                     shovingEntity = e;
@@ -167,7 +226,7 @@ void GameState::tick(float timescale) {
                     e->setPathToPlayer(path);
                 }
             }
-            // Event checking
+            // Entity event checking
             Tile t = _level->getTile(e->getPos().x, e->getPos().y);
             if(t.getTileEvent() == TileEvent::PUSH) {
                 e->setDelta(e->getPos().x - _player->getPos().x, e->getPos().y - _player->getPos().y);
@@ -181,6 +240,7 @@ void GameState::tick(float timescale) {
                 Tile t = _level->getTile(e->getPos().x, e->getPos().y);
                 t.damageTile(e->getWeight() + 1);
                 _level->setTile(e->getPos().x, e->getPos().y, t);
+                if(e->getHealth() == 0) _shoveKill = true;
             }
         }
 
@@ -205,13 +265,21 @@ void GameState::render() {
     SDL_SetRenderDrawColor(getRenderer(), 0x76, 0x9a, 0xb3, 0xFF);
     SDL_RenderClear(getRenderer());
 
+    // Level
     _level->render(_renderOffset.x, _renderOffset.y);
+
+    // Player
     if(!_gameOver) {
+        getSpritesheet("SHADOW")->render(_player->getRenderPos().x + _level->getRenderPos().x + _renderOffset.x,
+            _player->getRenderPos().y + _level->getRenderPos().y + _renderOffset.y + 1);
         _player->render(_level->getRenderPos().x + _renderOffset.x, _level->getRenderPos().y + _renderOffset.y);
     }
 
+    // Entities
     SDL_SetRenderDrawColor(getRenderer(), 0xFF, 0x00, 0x00, 0x64);
     for(auto e = _entityList.begin(); e != _entityList.end(); ++e) {
+        getSpritesheet("SHADOW")->render(e->get()->getRenderPos().x + _level->getRenderPos().x + _renderOffset.x,
+            e->get()->getRenderPos().y + _level->getRenderPos().y + _renderOffset.y + 1);
         e->get()->render(_level->getRenderPos().x + _renderOffset.x,
             _level->getRenderPos().y + _renderOffset.y);
         SDL_Rect r = {e->get()->getPosFacing().x * 16 + _level->getRenderPos().x + _renderOffset.x,
@@ -220,6 +288,17 @@ void GameState::render() {
             16};
         SDL_RenderFillRect(getRenderer(), &r);
     }
+
+    for(auto b : _bombList) {
+        b.render(_level->getRenderPos().x + _renderOffset.x, _level->getRenderPos().y + _renderOffset.y);
+    }
+
+    // HUD
+    Text* smallText = getText(TextSize::TINY);
+    smallText->setString("bombs: " + std::to_string(_player->getNumOfBombs()));
+    smallText->draw(4, 1);
+    smallText->setString("rebuilds: " + std::to_string(_player->getNumOfRebuilds()));
+    smallText->draw(4, 11);
 
     SDL_RenderPresent(getRenderer());
 }
@@ -236,4 +315,10 @@ void GameState::startMovingState(int moveSpeed) {
     _inMovingState = true;
     _moveTimer = 0;
     _moveSpeed = moveSpeed;
+}
+
+void GameState::tickBombTimers() {
+    for(auto b = _bombList.begin(); b != _bombList.end(); ++b) {
+        b->tickTimer();
+    }
 }

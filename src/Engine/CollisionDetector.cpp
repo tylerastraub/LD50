@@ -47,6 +47,9 @@ void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level) {
     // Then we check for any level events
     if(level->getTile(eNewPos.x, eNewPos.y).getTileStatus() == TileStatus::BROKEN) {
         e->hurt(99);
+        Tile t = level->getTile(eNewPos.x, eNewPos.y);
+        t.setEntityOnTile(false);
+        level->setTile(eNewPos.x, eNewPos.y, t);
     }
 }
 

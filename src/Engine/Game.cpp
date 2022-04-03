@@ -153,10 +153,27 @@ bool Game::loadResources() {
     }
     _spritesheets["GRUNT"] = gruntSpritesheet;
 
+    std::shared_ptr<Spritesheet> bombSpritesheet = std::make_shared<Spritesheet>();
+    if(!bombSpritesheet->load(_renderer, "res/sprite/bomb.png")) {
+        std::cout << "Error: failed to load 'res/sprite/bomb.png'!" << std::endl;
+        return false;
+    }
+    _spritesheets["BOMB"] = bombSpritesheet;
+    
+    std::shared_ptr<Spritesheet> shadowSpritesheet = std::make_shared<Spritesheet>();
+    if(!shadowSpritesheet->load(_renderer, "res/sprite/shadow.png")) {
+        std::cout << "Error: failed to load 'res/sprite/shadow.png'!" << std::endl;
+        return false;
+    }
+    _spritesheets["SHADOW"] = shadowSpritesheet;
+
     // Audio
     _audioPlayer = std::make_unique<Audio>();
     if(!_audioPlayer->addAudio(AudioSound::MOVE, "res/audio/step.wav")) return false;
     if(!_audioPlayer->addAudio(AudioSound::SHOVE, "res/audio/shove.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::REBUILD, "res/audio/rebuild.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::BOMB_BLOW, "res/audio/bombblow.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::PLACE_BOMB, "res/audio/placebomb.wav")) return false;
 
     return true;
 }
