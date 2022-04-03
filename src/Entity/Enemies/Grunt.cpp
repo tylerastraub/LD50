@@ -16,7 +16,11 @@ void Grunt::onPlayerAction() {
 }
 
 void Grunt::render(int xOffset, int yOffset) {
-    Spritesheet* ss = getSpritesheet();
+    Spritesheet* ss = getShadowSpritesheet();
+    ss->setTileIndex(0, 0);
+    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset + 1);
+
+    ss = getSpritesheet();
     int yIndex = 0;
     int xIndex = 0;
     bool spriteFlip = (getCurrentDirection() == Direction::WEST);

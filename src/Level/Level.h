@@ -15,8 +15,8 @@ public:
     void render(int xOffset, int yOffset);
 
     void fileTilemapWithDefaultLayout();
-    void onTileMovedFrom(int x, int y, Entity* e);
-    void onTileMovedTo(int x, int y, Entity* e);
+    void onTileMovedFrom(int x, int y, Entity* e, bool wasPushed);
+    void onTileMovedTo(int x, int y, Entity* e, bool wasPushed);
 
     void setTile(int x, int y, Tile tile);
     void setLevelSpritesheet(Spritesheet* spritesheet);

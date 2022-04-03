@@ -87,9 +87,9 @@ void Entity::hurt(int damage) {
     if(_health < 0) _health = 0;
 }
 
-void Entity::completePushRequest() {
+void Entity::completePushRequest(bool playAudio) {
     _push = false;
-    _audioPlayer->playAudio(_entityId, AudioSound::SHOVE, 1.f);
+    if(playAudio) _audioPlayer->playAudio(_entityId, AudioSound::SHOVE, 1.f);
 }
 
 void Entity::setEntityType(EntityType::EntityType type) {
@@ -124,6 +124,11 @@ void Entity::setTextureRect(SDL_Rect rect) {
 
 void Entity::setSpritesheet(Spritesheet* spritesheet) {
     _spritesheet = spritesheet;
+}
+
+
+void Entity::setShadowSpritesheet(Spritesheet* spritesheet) {
+    _shadowSpritesheet = spritesheet;
 }
 
 void Entity::setKeyboard(Keyboard* keyboard) {
@@ -189,6 +194,11 @@ int Entity::getMoveDistance() {
 Spritesheet* Entity::getSpritesheet() {
     return _spritesheet;
 }
+
+Spritesheet* Entity::getShadowSpritesheet() {
+    return _shadowSpritesheet;
+}
+
 Keyboard* Entity::getKeyboard() {
     return _keyboard;
 }
@@ -246,8 +256,4 @@ bool Entity::requestPush() {
 
 bool Entity::moveNextMovingState() {
     return _moveNextMovingState;
-}
-
-bool Entity::avoidsHazards() {
-    return _avoidsHazards;
 }

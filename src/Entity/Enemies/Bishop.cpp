@@ -4,7 +4,6 @@ Bishop::Bishop() {
     setEntityType(EntityType::BISHOP);
     setWeight(Weight::LIGHT);
     _needsPathToPlayer = true;
-    _avoidsHazards = true;
 }
 
 void Bishop::tick(float timescale) {
@@ -17,7 +16,11 @@ void Bishop::onPlayerAction() {
 }
 
 void Bishop::render(int xOffset, int yOffset) {
-    Spritesheet* ss = getSpritesheet();
+    Spritesheet* ss = getShadowSpritesheet();
+    ss->setTileIndex(0, 0);
+    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset);
+
+    ss = getSpritesheet();
     int yIndex = 0;
     int xIndex = 0;
     bool spriteFlip = (getCurrentDirection() == Direction::NORTHWEST ||

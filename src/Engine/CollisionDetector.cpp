@@ -3,7 +3,7 @@
 #include <set>
 #include <algorithm>
 
-void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level) {
+void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level, bool wasPushed) {
     SDL_Point eDelta = e->getDelta();
     SDL_Point ePos = e->getPos();
     SDL_Point eNewPos = {ePos.x + eDelta.x, ePos.y + eDelta.y};
@@ -13,8 +13,8 @@ void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level) {
         Tile t = level->getTile(eNewPos.x, eNewPos.y);
         if(t.getTileType() != TileType::NOVAL && t.getTileType() != TileType::WALL && !t.isEntityOnTile()) {
             e->setPos(eNewPos.x, eNewPos.y);
-            level->onTileMovedFrom(ePos.x, ePos.y, e);
-            level->onTileMovedTo(eNewPos.x, eNewPos.y, e);
+            level->onTileMovedFrom(ePos.x, ePos.y, e, wasPushed);
+            level->onTileMovedTo(eNewPos.x, eNewPos.y, e, wasPushed);
             e->onMove();
             Tile t = level->getTile(eNewPos.x, eNewPos.y);
             t.setEntityOnTile(true);
@@ -25,7 +25,7 @@ void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level) {
         }
         else if(t.getTileType() == TileType::NOVAL) {
             e->setPos(eNewPos.x, eNewPos.y);
-            level->onTileMovedFrom(ePos.x, ePos.y, e);
+            level->onTileMovedFrom(ePos.x, ePos.y, e, wasPushed);
             e->onMove();
             Tile t = level->getTile(ePos.x, ePos.y);
             t.setEntityOnTile(false);
@@ -53,7 +53,7 @@ void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level) {
     }
 }
 
-std::vector<SDL_Point> CollisionDetector::breadthFirstSearch(SDL_Point start, SDL_Point goal, Level* level, bool avoidHazards) {
+std::vector<SDL_Point> CollisionDetector::breadthFirstSearch(SDL_Point start, SDL_Point goal, Level* level) {
     std::queue<Node> queue;
     std::vector<Node> visited;
     std::vector<SDL_Point> result;
@@ -74,7 +74,7 @@ std::vector<SDL_Point> CollisionDetector::breadthFirstSearch(SDL_Point start, SD
             if(std::find(visited.begin(), visited.end(), nextNode) == visited.end() &&
                t.getTileType() != TileType::NOVAL &&
                t.getTileType() != TileType::WALL &&
-               (avoidHazards && t.getTileStatus() != TileStatus::BROKEN)) {
+               t.getTileStatus() != TileStatus::BROKEN) {
                 visited.push_back(nextNode);
                 if(nextNode.pos.x == goal.x && nextNode.pos.y == goal.y) {
                     while(nextNode.pos.x != start.x || nextNode.pos.y != start.y) {
@@ -98,7 +98,7 @@ std::vector<SDL_Point> CollisionDetector::breadthFirstSearch(SDL_Point start, SD
 }
 
 // We probably don't need another entire method for this but whatever
-std::vector<SDL_Point> CollisionDetector::diagonalBreadthFirstSearch(SDL_Point start, SDL_Point goal, Level* level, bool avoidHazards) {
+std::vector<SDL_Point> CollisionDetector::diagonalBreadthFirstSearch(SDL_Point start, SDL_Point goal, Level* level) {
     std::queue<Node> queue;
     std::vector<Node> visited;
     std::vector<SDL_Point> result;
@@ -121,7 +121,7 @@ std::vector<SDL_Point> CollisionDetector::diagonalBreadthFirstSearch(SDL_Point s
             if(std::find(visited.begin(), visited.end(), nextNode) == visited.end() &&
                t.getTileType() != TileType::NOVAL &&
                t.getTileType() != TileType::WALL &&
-               (avoidHazards && t.getTileStatus() != TileStatus::BROKEN)) {
+               t.getTileStatus() != TileStatus::BROKEN) {
                 visited.push_back(nextNode);
                 if(nextNode.pos.x == goal.x && nextNode.pos.y == goal.y) {
                     while(nextNode.pos.x != start.x || nextNode.pos.y != start.y) {

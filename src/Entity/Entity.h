@@ -34,7 +34,7 @@ public:
     void move(std::vector<SDL_Point> path);
     void stop();
     void hurt(int damage);
-    void completePushRequest();
+    void completePushRequest(bool playAudio = true);
 
     void setPos(int x, int y);
     void setLastPos(int x, int y);
@@ -43,6 +43,7 @@ public:
     void setMoveDistance(int moveDistance);
     void setTextureRect(SDL_Rect rect);
     void setSpritesheet(Spritesheet* spritesheet);
+    void setShadowSpritesheet(Spritesheet* spritesheet);
     void setKeyboard(Keyboard* keyboard);
     void setAudioPlayer(Audio* audioPlayer);
     void setWeight(Weight::Weight weight);
@@ -60,6 +61,7 @@ public:
     bool isMoving();
     int getMoveDistance();
     Spritesheet* getSpritesheet();
+    Spritesheet* getShadowSpritesheet();
     Keyboard* getKeyboard();
     Audio* getAudioPlayer();
     Weight::Weight getWeight();
@@ -70,7 +72,6 @@ public:
     SDL_Point getPosFacing();
     bool requestPush();
     bool moveNextMovingState();
-    bool avoidsHazards();
 
 protected:
     void setEntityType(EntityType::EntityType type);
@@ -80,8 +81,6 @@ protected:
     SDL_Point _playerPos = {-10, -10,};
 
     bool _push = false;
-
-    bool _avoidsHazards = false;
 
 private:
     static int entityIdProvider;
@@ -110,6 +109,7 @@ private:
 
     // Render
     Spritesheet* _spritesheet = nullptr;
+    Spritesheet* _shadowSpritesheet = nullptr;
 
     // Input
     Keyboard* _keyboard = nullptr;

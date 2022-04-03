@@ -82,16 +82,22 @@ void Level::fileTilemapWithDefaultLayout() {
     setTile(_levelWidth / 2, _levelHeight / 2, startTile);
 }
 
-void Level::onTileMovedFrom(int x, int y, Entity* e) {
+void Level::onTileMovedFrom(int x, int y, Entity* e, bool wasPushed) {
     Tile t = getTile(x, y);
-    if(t.canBeDamaged()) {
+    if(t.canBeDamaged() && !wasPushed) {
         t.damageTile(e->getWeight());
         setTile(x, y, t);
     }
 }
 
-void Level::onTileMovedTo(int x, int y, Entity* e) {
-    
+void Level::onTileMovedTo(int x, int y, Entity* e, bool wasPushed) {
+    Tile t = getTile(x, y);
+    if(t.canBeDamaged() && wasPushed) {
+        int extraDamage = 1;
+        if(e->getEntityType() == EntityType::PLAYER) extraDamage = 0;
+        t.damageTile(e->getWeight() + extraDamage);
+        setTile(x, y, t);
+    }
 }
 
 void Level::setTile(int x, int y, Tile tile) {

@@ -7,18 +7,16 @@
 
 /**
  * TODO:
- * - Add more enemies
- * - Enemy idea: Bishop. Moves only diagonally (and only shoves diagonally)
- * - Enemy idea: Tank. Moves every other turn but does 2 damage to each tile
- * - Enemy idea: Wildcard. Move in a random direction every turn
+ * - Add enemy: Tank. Moves every other turn but does 2 damage to each tile
  * - Add death sound (falling)
- * - Add falling effect (shrink sprite?)
  * - Refine HUD more
  * - Gamify with score/moves taken
+ * EXTRAS: (if have time)
+ * - Enemy idea: Wildcard. Move in a random direction every turn
+ * - Bishop not great at knowing when to shove player, could work on that
  * - Add bomb explosion sprite
- * - Can experiment with using arrows to move direction then pressing space to actually move... would make shove better (but maybe too good?)
+ * - Add falling effect (shrink sprite?)
  * - Add water lines (if have time add them around iceberg too)
- * - Come up with cool level designs if have time (need to finalize level size first)
  */
 
 std::mt19937 RandomGen::randEng{(unsigned int) std::chrono::system_clock::now().time_since_epoch().count()};
@@ -41,6 +39,7 @@ void GameState::init() {
     _player->setLastPos(4, 4);
     _player->setRenderPos(4 * _level->getTileSize(), 4 * _level->getTileSize());
     _player->setSpritesheet(getSpritesheet("PLAYER"));
+    _player->setShadowSpritesheet(getSpritesheet("SHADOW"));
     _player->setKeyboard(_keyboard.get());
     _player->setAudioPlayer(getAudioPlayer());
 
@@ -61,18 +60,20 @@ void GameState::init() {
         it->get()->setPlayerPos(_player->getPos());
         if(it->get()->needsPathToPlayer()) {
             if(it->get()->getEntityType() == EntityType::BISHOP) {
-                it->get()->setPathToPlayer(_collisionDetector.diagonalBreadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get(), it->get()->avoidsHazards()));
+                it->get()->setPathToPlayer(_collisionDetector.diagonalBreadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get()));
             }
             else {
-                it->get()->setPathToPlayer(_collisionDetector.breadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get(), it->get()->avoidsHazards()));
+                it->get()->setPathToPlayer(_collisionDetector.breadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get()));
             }
         }
         switch(it->get()->getEntityType()) {
             case EntityType::GRUNT:
                 it->get()->setSpritesheet(getSpritesheet("GRUNT"));
+                it->get()->setShadowSpritesheet(getSpritesheet("SHADOW"));
                 break;
             case EntityType::BISHOP:
                 it->get()->setSpritesheet(getSpritesheet("BISHOP"));
+                it->get()->setShadowSpritesheet(getSpritesheet("SHADOW"));
                 break;
         }
     }
@@ -115,10 +116,14 @@ void GameState::tick(float timescale) {
             _shoveInAction = false;
             if(shovingEntity == nullptr) return;
             _player->setDelta(_player->getPos().x - shovingEntity->getPos().x, _player->getPos().y - shovingEntity->getPos().y);
-            _collisionDetector.checkForLevelCollisions(_player.get(), _level.get());
-            shovingEntity->completePushRequest();
-            _player->setMoveNextMovingState(true);
-            startMovingState(DEFAULT_SHOVE_SPEED);
+            SDL_Point oldPos = _player->getPos();
+            _collisionDetector.checkForLevelCollisions(_player.get(), _level.get(), true);
+            bool pMove = !(oldPos.x == _player->getPos().x && oldPos.y == _player->getPos().y);
+            shovingEntity->completePushRequest(pMove);
+            if(pMove) {
+                _player->setMoveNextMovingState(true);
+                startMovingState(DEFAULT_SHOVE_SPEED);
+            }
         }
         else if(_spawnEnemy &&
                 !_inMovingState) {
@@ -150,16 +155,17 @@ void GameState::tick(float timescale) {
                         for(auto p : b->getSurroundingPoints()) {
                             t = _level->getTile(p.x, p.y);
                             if(t.canBeDamaged()) t.damageTile(1);
-                            _level->setTile(p.x, p.y, t);
                             if(t.isEntityOnTile()) {
                                 for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
                                     auto e = it->get();
                                     if(e->getPos().x == p.x && e->getPos().y == p.y) {
                                         e->hurt(3);
+                                        if(e->getHealth() == 0) t.setEntityOnTile(false);
                                         break;
                                     }
                                 }
                             }
+                            _level->setTile(p.x, p.y, t);
                         }
                         b = _bombList.erase(b);
                         --b;
@@ -244,11 +250,11 @@ void GameState::tick(float timescale) {
                 // Entity moves based on old player path so that they're not insanely hard to evade
                 if(e->needsPathToPlayer()) {
                     if(e->getEntityType() == EntityType::BISHOP) {
-                        auto path = _collisionDetector.diagonalBreadthFirstSearch(e->getPos(), _player->getPos(), _level.get(), e->avoidsHazards());
+                        auto path = _collisionDetector.diagonalBreadthFirstSearch(e->getPos(), _player->getPos(), _level.get());
                         e->setPathToPlayer(path);
                     }
                     else {
-                        auto path = _collisionDetector.breadthFirstSearch(e->getPos(), _player->getPos(), _level.get(), e->avoidsHazards());
+                        auto path = _collisionDetector.breadthFirstSearch(e->getPos(), _player->getPos(), _level.get());
                         e->setPathToPlayer(path);
                     }
                 }
@@ -279,22 +285,22 @@ void GameState::tick(float timescale) {
                     }
                 }
                 for(auto se : shovedEntities) {
-                    _collisionDetector.checkForLevelCollisions(se, _level.get());
+                    _collisionDetector.checkForLevelCollisions(se, _level.get(), true);
                     if(se->needsPathToPlayer()) {
                         if(se->getEntityType() == EntityType::BISHOP) {
-                            auto path = _collisionDetector.diagonalBreadthFirstSearch(se->getPos(), _player->getPos(), _level.get(), se->avoidsHazards());
+                            auto path = _collisionDetector.diagonalBreadthFirstSearch(se->getPos(), _player->getPos(), _level.get());
                             se->setPathToPlayer(path);
                         }
                         else {
-                            auto path = _collisionDetector.breadthFirstSearch(se->getPos(), _player->getPos(), _level.get(), se->avoidsHazards());
+                            auto path = _collisionDetector.breadthFirstSearch(se->getPos(), _player->getPos(), _level.get());
                             se->setPathToPlayer(path);
                         }
                     }
                     Tile t = _level->getTile(se->getPos().x, se->getPos().y);
-                    t.damageTile(se->getWeight() + 1);
-                    if(t.getTileStatus() == TileStatus::BROKEN) se->hurt(99);
-                    _level->setTile(se->getPos().x, se->getPos().y, t);
-                    if(se->getHealth() == 0) _shoveKill = true;
+                    if(t.getTileStatus() == TileStatus::BROKEN) {
+                        se->hurt(99);
+                        _shoveKill = true;
+                    }
                     se->setMoveNextMovingState(true);
                 }
                 startMovingState(DEFAULT_SHOVE_SPEED);
@@ -327,23 +333,18 @@ void GameState::render() {
 
     // Player
     if(!_gameOver) {
-        getSpritesheet("SHADOW")->render(_player->getRenderPos().x + _level->getRenderPos().x + _renderOffset.x,
-            _player->getRenderPos().y + _level->getRenderPos().y + _renderOffset.y + 1);
         _player->render(_level->getRenderPos().x + _renderOffset.x, _level->getRenderPos().y + _renderOffset.y);
     }
 
     // Entities
     SDL_SetRenderDrawColor(getRenderer(), 0xFF, 0x00, 0x00, 0x64);
     for(auto e = _entityList.begin(); e != _entityList.end(); ++e) {
-        getSpritesheet("SHADOW")->render(e->get()->getRenderPos().x + _level->getRenderPos().x + _renderOffset.x,
-            e->get()->getRenderPos().y + _level->getRenderPos().y + _renderOffset.y + 1);
-        e->get()->render(_level->getRenderPos().x + _renderOffset.x,
-            _level->getRenderPos().y + _renderOffset.y);
-        SDL_Rect r = {e->get()->getPosFacing().x * 16 + _level->getRenderPos().x + _renderOffset.x,
-            e->get()->getPosFacing().y * 16 + _level->getRenderPos().y + _renderOffset.y,
-            16,
-            16};
-        SDL_RenderFillRect(getRenderer(), &r);
+        e->get()->render(_level->getRenderPos().x + _renderOffset.x, _level->getRenderPos().y + _renderOffset.y);
+        // SDL_Rect r = {e->get()->getPosFacing().x * 16 + _level->getRenderPos().x + _renderOffset.x,
+        //     e->get()->getPosFacing().y * 16 + _level->getRenderPos().y + _renderOffset.y,
+        //     16,
+        //     16};
+        // SDL_RenderFillRect(getRenderer(), &r);
     }
 
     for(auto b : _bombList) {
