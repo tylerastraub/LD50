@@ -24,6 +24,7 @@ private:
     void startMovingState(int moveSpeed);
     void tickBombTimers();
     void addEnemySpawn();
+    void shoveEntity(Entity* shovingEntity, Entity* shovedEntity);
 
     const int DEFAULT_MOVE_SPEED = 4;
     const int DEFAULT_SHOVE_SPEED = 12;

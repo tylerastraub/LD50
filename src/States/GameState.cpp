@@ -2,6 +2,7 @@
 #include "RandomGen.h"
 #include "Grunt.h"
 #include "Bishop.h"
+#include "Tank.h"
 
 #include <chrono>
 
@@ -10,8 +11,8 @@
  * - Add enemy: Tank. Moves every other turn but does 2 damage to each tile
  * - Add enemy spawning
  * - Add death sound (falling)
+ * - Add powerup sound for shove kills
  * - Refine HUD more
- * - Gamify with score/moves taken
  * EXTRAS: (if have time)
  * - Fix bug where bomb can be placed on damaged tile then stays after tile gets broken
  * - Enemy idea: Wildcard. Move in a random direction every turn
@@ -55,6 +56,11 @@ void GameState::init() {
     _entityList.back()->setLastPos(2, 2);
     _entityList.back()->setRenderPos(2 * _level->getTileSize(), 2 * _level->getTileSize());
     _entityList.back()->setAudioPlayer(getAudioPlayer());
+    _entityList.push_back(std::make_unique<Tank>());
+    _entityList.back()->setPos(6, 2);
+    _entityList.back()->setLastPos(6, 2);
+    _entityList.back()->setRenderPos(6 * _level->getTileSize(), 2 * _level->getTileSize());
+    _entityList.back()->setAudioPlayer(getAudioPlayer());
 
     // Spritesheet and other init stuff for entities
     for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
@@ -76,6 +82,10 @@ void GameState::init() {
                 it->get()->setSpritesheet(getSpritesheet("BISHOP"));
                 it->get()->setShadowSpritesheet(getSpritesheet("SHADOW"));
                 break;
+            case EntityType::TANK:
+                it->get()->setSpritesheet(getSpritesheet("TANK"));
+                it->get()->setShadowSpritesheet(getSpritesheet("SHADOW"));
+                break;
         }
     }
 }
@@ -91,7 +101,7 @@ void GameState::tick(float timescale) {
             _inMovingState = false;
             _moveTimer = 1.f;
         }
-
+        // Move player
         if(_player->moveNextMovingState()) {
             int playerDx = _player->getPos().x - _player->getLastPos().x;
             int playerDy = _player->getPos().y - _player->getLastPos().y;
@@ -99,7 +109,7 @@ void GameState::tick(float timescale) {
                 (_player->getLastPos().y + _moveTimer * playerDy) * _level->getTileSize());
             _player->setMoveNextMovingState(_inMovingState);
         }
-
+        // Move entities
         for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
             Entity* e = it->get();
             if(e->moveNextMovingState()) {
@@ -110,13 +120,16 @@ void GameState::tick(float timescale) {
                 e->setMoveNextMovingState(_inMovingState);
             }
         }
+        // Player got shoved
         if(_shoveInAction &&
            !_inMovingState &&
            _player->getHealth() != 0 &&
            _level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() != TileStatus::BROKEN) {
             _shoveInAction = false;
             if(shovingEntity == nullptr) return;
-            _player->setDelta(_player->getPos().x - shovingEntity->getPos().x, _player->getPos().y - shovingEntity->getPos().y);
+            int dx = _player->getPos().x - shovingEntity->getPos().x;
+            int dy = _player->getPos().y - shovingEntity->getPos().y;
+            _player->setDelta(dx * (shovingEntity->getWeight() + 1), dy * (shovingEntity->getWeight() + 1));
             SDL_Point oldPos = _player->getPos();
             _collisionDetector.checkForLevelCollisions(_player.get(), _level.get(), true);
             bool pMove = !(oldPos.x == _player->getPos().x && oldPos.y == _player->getPos().y);
@@ -202,6 +215,10 @@ void GameState::tick(float timescale) {
             _gameOver = true;
         }
         else {
+            if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN ||
+               _level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::NOVAL) {
+                _player->hurt(99);
+            }
             _player->tick(timescale);
             if(_player->isMoving()) {
                 SDL_Point oldPos = _player->getPos();
@@ -242,6 +259,10 @@ void GameState::tick(float timescale) {
         std::vector<Entity> entityPushes;
         for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
             Entity* e = it->get();
+            if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN ||
+               _level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::NOVAL) {
+                e->hurt(99);
+            }
             // Entity removal
             if(e->getHealth() == 0) {
                 it = _entityList.erase(it);
@@ -316,7 +337,7 @@ void GameState::tick(float timescale) {
                         }
                     }
                     Tile t = _level->getTile(se->getPos().x, se->getPos().y);
-                    if(t.getTileStatus() == TileStatus::BROKEN) {
+                    if(t.getTileStatus() == TileStatus::BROKEN || t.getTileStatus() == TileStatus::NOVAL) {
                         se->hurt(99);
                         ++_shoveKills;
                     }
@@ -399,4 +420,8 @@ void GameState::tickBombTimers() {
 
 void GameState::addEnemySpawn() {
     // TODO: enemy spawn stuff
+}
+
+void GameState::shoveEntity(Entity* shovingEntity, Entity* shovedEntity) {
+
 }

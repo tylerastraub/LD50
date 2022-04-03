@@ -156,6 +156,13 @@ bool Game::loadResources() {
         return false;
     }
     _spritesheets["BISHOP"] = bishopSpritesheet;
+    
+    std::shared_ptr<Spritesheet> tankSpritesheet = std::make_shared<Spritesheet>();
+    if(!tankSpritesheet->load(_renderer, "res/sprite/tank.png")) {
+        std::cout << "Error: failed to load 'res/sprite/tank.png'!" << std::endl;
+        return false;
+    }
+    _spritesheets["TANK"] = tankSpritesheet;
 
     // Audio
     _audioPlayer = std::make_unique<Audio>();

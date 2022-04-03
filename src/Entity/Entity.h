@@ -16,6 +16,8 @@ namespace EntityType {
         PLAYER,
         GRUNT,
         BISHOP,
+        TANK,
+        WILDCARD,
     };
 };
 

@@ -1,6 +1,5 @@
 #include "CollisionDetector.h"
 
-#include <set>
 #include <algorithm>
 
 void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level, bool wasPushed) {
