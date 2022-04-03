@@ -26,6 +26,10 @@ void Tile::setTileEvent(TileEvent::TileEvent event) {
     _tileEvent = event;
 }
 
+void Tile::setEntityOnTile(bool onTile) {
+    _entityOnTile = onTile;
+}
+
 TileType::TileType Tile::getTileType() {
     return _tileType;
 }
@@ -43,6 +47,9 @@ bool Tile::canBeDamaged() {
         case TileType::ICE:
             return true;
     }
-
     return false;
+}
+
+bool Tile::isEntityOnTile() {
+    return _entityOnTile;
 }

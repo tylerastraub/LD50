@@ -6,7 +6,7 @@ Level::Level(int w, int h) {
     _levelWidth = w;
     _levelHeight = h;
     for(int i = 0; i < _levelWidth * _levelHeight; ++i) {
-        _tilemap.push_back(Tile(TileType::NOVAL));        
+        _tilemap.push_back(Tile(TileType::NOVAL));
     }
 }
 
@@ -31,7 +31,6 @@ void Level::render(int xOffset, int yOffset) {
                 _renderPos.y + yOffset + yPos * tileSize);
         }
         if(tile.getTileEvent() == TileEvent::PUSH) {
-            std::cout << "push tile at " << xPos << ", " << yPos << std::endl;
             _levelSpritesheet->setTileIndex(3, 3);
             _levelSpritesheet->render(_renderPos.x + xOffset + xPos * tileSize,
                 _renderPos.y + yOffset + yPos * tileSize);

@@ -33,8 +33,11 @@ public:
     void move(std::vector<SDL_Point> path);
     void stop();
     void hurt(int damage);
+    void completePushRequest();
 
     void setPos(int x, int y);
+    void setLastPos(int x, int y);
+    void setRenderPos(int x, int y);
     void setDelta(int dx, int dy);
     void setMoveDistance(int moveDistance);
     void setTextureRect(SDL_Rect rect);
@@ -44,10 +47,14 @@ public:
     void setWeight(Weight::Weight weight);
     void setPathToPlayer(std::vector<SDL_Point> path);
     void setCurrentDirection(Direction::Direction dir);
+    void setPlayerPos(SDL_Point pos);
+    void setMoveNextMovingState(bool move);
 
     int getEntityId();
     EntityType::EntityType getEntityType();
     SDL_Point getPos();
+    SDL_Point getLastPos();
+    SDL_Point getRenderPos();
     SDL_Point getDelta();
     bool isMoving();
     int getMoveDistance();
@@ -60,12 +67,17 @@ public:
     int getHealth();
     Direction::Direction getCurrentDirection();
     SDL_Point getPosFacing();
+    bool requestPush();
+    bool moveNextMovingState();
 
 protected:
     void setEntityType(EntityType::EntityType type);
 
     const int TILE_SIZE = 16;
     bool _needsPathToPlayer = false;
+    SDL_Point _playerPos = {-10, -10,};
+
+    bool _push = false;
 
 private:
     static int entityIdProvider;
@@ -76,9 +88,14 @@ private:
 
     // The entity's tile position
     SDL_Point _pos = {0, 0};
+    // The entity's previous tile position
+    SDL_Point _lastPos = {0, 0};
+    // The entity's render position. Used for smooth movement between tiles
+    SDL_Point _renderPos = {0, 0};
     int _dx = 0;
     int _dy = 0;
     int _moveDistance = 1;
+    bool _moveNextMovingState = false;
 
     // Used for mapping the texture to the entity
     SDL_Rect _textureRect = {0, 0, 0, 0};

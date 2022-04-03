@@ -5,8 +5,10 @@ namespace AudioSound {
     enum AudioSound {
         NOVAL = -1,
         MOVE,
-        ACTION,
-        JUMP,
+        SHOVE,
+        PLACE_BOMB,
+        BOMB_BLOW,
+        REBUILD,
     };
 };
 

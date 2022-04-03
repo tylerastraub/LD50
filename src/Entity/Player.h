@@ -14,7 +14,6 @@ public:
 
     void handleInput();
 
-    bool requestPush();
     bool requestBomb();
     bool requestRebuild();
 
@@ -24,7 +23,6 @@ private:
     bool _up = false;
     bool _down = false;
     
-    bool _push = false;
     bool _bomb = false;
     bool _rebuild = false;
 };

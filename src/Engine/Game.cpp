@@ -156,6 +156,7 @@ bool Game::loadResources() {
     // Audio
     _audioPlayer = std::make_unique<Audio>();
     if(!_audioPlayer->addAudio(AudioSound::MOVE, "res/audio/step.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::SHOVE, "res/audio/shove.wav")) return false;
 
     return true;
 }

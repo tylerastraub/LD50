@@ -11,11 +11,26 @@ void CollisionDetector::checkForLevelCollisions(Entity* e, Level* level) {
     // First we move (if possible)
     if(eDelta.x != 0 || eDelta.y != 0) {
         Tile t = level->getTile(eNewPos.x, eNewPos.y);
-        if(t.getTileType() != TileType::NOVAL && t.getTileType() != TileType::WALL) {
+        if(t.getTileType() != TileType::NOVAL && t.getTileType() != TileType::WALL && !t.isEntityOnTile()) {
             e->setPos(eNewPos.x, eNewPos.y);
             level->onTileMovedFrom(ePos.x, ePos.y, e);
             level->onTileMovedTo(eNewPos.x, eNewPos.y, e);
             e->onMove();
+            Tile t = level->getTile(eNewPos.x, eNewPos.y);
+            t.setEntityOnTile(true);
+            level->setTile(eNewPos.x, eNewPos.y, t);
+            t = level->getTile(ePos.x, ePos.y);
+            t.setEntityOnTile(false);
+            level->setTile(ePos.x, ePos.y, t);
+        }
+        else if(t.getTileType() == TileType::NOVAL) {
+            e->setPos(eNewPos.x, eNewPos.y);
+            level->onTileMovedFrom(ePos.x, ePos.y, e);
+            e->onMove();
+            Tile t = level->getTile(ePos.x, ePos.y);
+            t.setEntityOnTile(false);
+            level->setTile(ePos.x, ePos.y, t);
+            e->hurt(99);
         }
         // This is not tested yet
         else if(std::abs(eDelta.x) > 1 || std::abs(eDelta.y) > 1) {

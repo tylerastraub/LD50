@@ -40,7 +40,38 @@ void Entity::move(Direction::Direction dir) {
 void Entity::move(std::vector<SDL_Point> path) {
     if(path.empty()) return;
     SDL_Point p = *path.begin();
-    setDelta((p.x - getPos().x) * _moveDistance, (p.y - getPos().y) * _moveDistance);
+    int dx = p.x - getPos().x;
+    int dy = p.y - getPos().y;
+    setDelta(dx * _moveDistance, dy * _moveDistance);
+
+    if(dx < 0) {
+        if(dy < 0) {
+            _currentDirection = Direction::NORTHWEST;
+        }
+        else if(dy > 0) {
+            _currentDirection = Direction::SOUTHWEST;
+        }
+        else {
+            _currentDirection = Direction::WEST;
+        }
+    }
+    else if(dx > 0) {
+        if(dy < 0) {
+            _currentDirection = Direction::NORTHEAST;
+        }
+        else if(dy > 0) {
+            _currentDirection = Direction::SOUTHEAST;
+        }
+        else {
+            _currentDirection = Direction::EAST;
+        }
+    }
+    else if(dy < 0) {
+        _currentDirection = Direction::NORTH;
+    }
+    else if(dy > 0) {
+        _currentDirection = Direction::SOUTH;
+    }
 }
 
 void Entity::stop() {
@@ -53,12 +84,26 @@ void Entity::hurt(int damage) {
     if(_health < 0) _health = 0;
 }
 
+void Entity::completePushRequest() {
+    _push = false;
+    _audioPlayer->playAudio(_entityId, AudioSound::SHOVE, 1.f);
+}
+
 void Entity::setEntityType(EntityType::EntityType type) {
     _type = type;
 }
 
 void Entity::setPos(int x, int y) {
+    _lastPos = _pos;
     _pos = {x, y};
+}
+
+void Entity::setLastPos(int x, int y) {
+    _lastPos = {x, y};
+}
+
+void Entity::setRenderPos(int x, int y) {
+    _renderPos = {x, y - TILE_SIZE / 4};
 }
 
 void Entity::setDelta(int dx, int dy) {
@@ -98,6 +143,14 @@ void Entity::setCurrentDirection(Direction::Direction dir) {
     _currentDirection = dir;
 }
 
+void Entity::setPlayerPos(SDL_Point pos) {
+    _playerPos = pos;
+}
+
+void Entity::setMoveNextMovingState(bool move) {
+    _moveNextMovingState = move;
+}
+
 int Entity::getEntityId() {
     return _entityId;
 }
@@ -108,6 +161,14 @@ EntityType::EntityType Entity::getEntityType() {
 
 SDL_Point Entity::getPos() {
     return _pos;
+}
+
+SDL_Point Entity::getLastPos() {
+    return _lastPos;
+}
+
+SDL_Point Entity::getRenderPos() {
+    return _renderPos;
 }
 
 SDL_Point Entity::getDelta() {
@@ -174,4 +235,12 @@ SDL_Point Entity::getPosFacing() {
         default:
             return _pos;
     }
+}
+
+bool Entity::requestPush() {
+    return _push;
+}
+
+bool Entity::moveNextMovingState() {
+    return _moveNextMovingState;
 }

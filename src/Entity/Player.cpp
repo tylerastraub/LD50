@@ -21,7 +21,7 @@ void Player::render(int xOffset, int yOffset) {
     Spritesheet* ss = getSpritesheet();
     ss->setIsAnimated(false);
     ss->setIsLooped(false);
-    ss->render(getPos().x * TILE_SIZE + xOffset, getPos().y * TILE_SIZE + yOffset - TILE_SIZE / 4);
+    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset);
 }
 
 void Player::handleInput() {
@@ -33,10 +33,6 @@ void Player::handleInput() {
     _push = (k->isKeyPressed(SDL_SCANCODE_Z) || k->isKeyPressed(SDL_SCANCODE_I));
     _bomb = (k->isKeyPressed(SDL_SCANCODE_X) || k->isKeyPressed(SDL_SCANCODE_O));
     _rebuild = (k->isKeyPressed(SDL_SCANCODE_C) || k->isKeyPressed(SDL_SCANCODE_P));
-}
-
-bool Player::requestPush() {
-    return _push;
 }
 
 bool Player::requestBomb() {

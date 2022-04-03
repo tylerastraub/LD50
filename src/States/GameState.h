@@ -23,6 +23,11 @@ public:
     void handleControllerAxisInput(SDL_Event e) override;
 
 private:
+    void startMovingState(int moveSpeed);
+
+    const int DEFAULT_MOVE_SPEED = 6;
+    const int DEFAULT_SHOVE_SPEED = 12;
+
     std::unique_ptr<Keyboard> _keyboard = nullptr;
     std::unique_ptr<Controller> _controller = nullptr;
 
@@ -34,7 +39,15 @@ private:
     std::list<std::unique_ptr<Entity>> _entityList;
     CollisionDetector _collisionDetector;
 
+    float _moveTimer = 0;
+    // 1 / _moveSpeed = time in seconds (for instance _moveSpeed = 4 means 0.25 sec move time)
+    int _moveSpeed = 6;
+
     bool _gameOver = false;
+    bool _inMovingState = false;
+
+    bool _shoveInAction = false;
+    Entity* shovingEntity = nullptr;
 };
 
 #endif
