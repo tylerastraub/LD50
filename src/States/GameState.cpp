@@ -67,7 +67,8 @@ void GameState::tick(float timescale) {
     if(_keyboard->isKeyPressed(SDL_SCANCODE_R)) setNextState(new GameState());
 
     // Enemy spawning
-    if(_movesSinceLastEnemySpawn >= _currentSpawnWaitTime || _entityList.empty()) {
+    if((_movesSinceLastEnemySpawn >= _currentSpawnWaitTime || _entityList.empty()) &&
+        _player->getHealth() > 0) {
         _spawnEnemy = true;
         _inMovingState = true;
     }
@@ -184,6 +185,7 @@ void GameState::tick(float timescale) {
                 _shoveKills = 0;
                 _player->setRebuildCount(_player->getNumOfRebuilds() + 1);
                 _player->setBombCount(_player->getNumOfBombs() + 1);
+                getAudioPlayer()->playAudio(_player->getEntityId(), AudioSound::ITEM_EARNED, 0.9f);
             }
         }
     }
@@ -191,6 +193,11 @@ void GameState::tick(float timescale) {
         bool playerMove = false;
         // Player tick
         if(_player->getHealth() == 0) {
+            if((_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN ||
+               _level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::NOVAL) &&
+               !_gameOver) {
+                getAudioPlayer()->playAudio(_player->getEntityId(), AudioSound::FALL, 1.f);
+            }
             _gameOver = true;
             _keyboard->updateInputs();
             return;
@@ -247,6 +254,10 @@ void GameState::tick(float timescale) {
             }
             // Entity removal
             if(e->getHealth() == 0) {
+                if(_level->getTile(e->getPos().x, e->getPos().y).getTileStatus() == TileStatus::BROKEN ||
+                   _level->getTile(e->getPos().x, e->getPos().y).getTileStatus() == TileStatus::NOVAL) {
+                    getAudioPlayer()->playAudio(e->getEntityId(), AudioSound::FALL, 1.f);
+                }
                 it = _entityList.erase(it);
                 --it;
                 continue;
@@ -388,9 +399,9 @@ void GameState::render() {
     if(_gameOver) {
         Text* medText = getText(TextSize::MEDIUM);
         medText->setString("GAME OVER");
-        medText->draw(getGameSize().x / 2 - medText->getWidth() / 2, getGameSize().y / 2 - 20);
+        medText->draw(getGameSize().x / 2 - medText->getWidth() / 2, 20);
         smallText->setString("press 'R' to restart");
-        smallText->draw(getGameSize().x / 2 - smallText->getWidth() / 2 - 3, getGameSize().y / 2);
+        smallText->draw(getGameSize().x / 2 - smallText->getWidth() / 2 - 3, 40);
     }
 
     SDL_RenderPresent(getRenderer());
@@ -451,7 +462,7 @@ void GameState::addEnemySpawn() {
         _entityList.back()->setPathToPlayer(_collisionDetector.diagonalBreadthFirstSearch(_entityList.back()->getPos(), _player->getPos(), _level.get()));
         _entityList.back()->setMoveNextMovingState(true);
     }
-    else if(probHit <= GRUNT_SPAWN_CHANCE + BISHOP_SPAWN_CHANCE + TANK_SPAWN_CHANCE) {
+    else {
         _entityList.push_back(std::make_unique<Tank>());
         _entityList.back()->setPos(spawnPoint.x, spawnPoint.y);
         _entityList.back()->setLastPos(spawnPoint.x, spawnPoint.y - 20);
@@ -462,4 +473,5 @@ void GameState::addEnemySpawn() {
         _entityList.back()->setPathToPlayer(_collisionDetector.breadthFirstSearch(_entityList.back()->getPos(), _player->getPos(), _level.get()));
         _entityList.back()->setMoveNextMovingState(true);
     }
+    getAudioPlayer()->playAudio(_entityList.back()->getEntityId(), AudioSound::SPAWN, 0.8f);
 }

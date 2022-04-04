@@ -171,6 +171,9 @@ bool Game::loadResources() {
     if(!_audioPlayer->addAudio(AudioSound::REBUILD, "res/audio/rebuild.wav")) return false;
     if(!_audioPlayer->addAudio(AudioSound::BOMB_BLOW, "res/audio/bombblow.wav")) return false;
     if(!_audioPlayer->addAudio(AudioSound::PLACE_BOMB, "res/audio/placebomb.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::SPAWN, "res/audio/spawn.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::FALL, "res/audio/fall.wav")) return false;
+    if(!_audioPlayer->addAudio(AudioSound::ITEM_EARNED, "res/audio/itemearned.wav")) return false;
 
     return true;
 }

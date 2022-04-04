@@ -9,6 +9,9 @@ namespace AudioSound {
         PLACE_BOMB,
         BOMB_BLOW,
         REBUILD,
+        ITEM_EARNED,
+        SPAWN,
+        FALL, // For when entities die
     };
 };
 
