@@ -402,6 +402,8 @@ void GameState::render() {
         medText->draw(getGameSize().x / 2 - medText->getWidth() / 2, 20);
         smallText->setString("press 'R' to restart");
         smallText->draw(getGameSize().x / 2 - smallText->getWidth() / 2 - 3, 40);
+        smallText->setString("press 'ESC' to quit");
+        smallText->draw(getGameSize().x / 2 - smallText->getWidth() / 2 - 3, 50);
     }
 
     SDL_RenderPresent(getRenderer());
