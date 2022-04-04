@@ -101,14 +101,14 @@ bool Game::loadResources() {
     _text[TextSize::SMALL] = smallText;
 
     std::shared_ptr<Text> mediumText = std::make_shared<Text>(_renderer);
-    if(!mediumText->load(_gameFontPath, 18)) {
+    if(!mediumText->load(_gameFontPath, 20)) {
         std::cout << "Error: Failed to load font '" << _gameFontPath << "'!" << std::endl;
         return false;
     }
     _text[TextSize::MEDIUM] = mediumText;
     
     std::shared_ptr<Text> largeText = std::make_shared<Text>(_renderer);
-    if(!largeText->load(_gameFontPath, 22)) {
+    if(!largeText->load(_gameFontPath, 24)) {
         std::cout << "Error: Failed to load font '" << _gameFontPath << "'!" << std::endl;
         return false;
     }

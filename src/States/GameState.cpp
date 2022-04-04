@@ -8,7 +8,6 @@
 
 /**
  * TODO:
- * - Add enemy spawning
  * - Add death sound (falling)
  * - Add powerup sound for shove kills
  * - Refine HUD more
@@ -193,6 +192,8 @@ void GameState::tick(float timescale) {
         // Player tick
         if(_player->getHealth() == 0) {
             _gameOver = true;
+            _keyboard->updateInputs();
+            return;
         }
         else {
             if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN ||
@@ -240,8 +241,8 @@ void GameState::tick(float timescale) {
         std::vector<Entity> entityPushes;
         for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
             Entity* e = it->get();
-            if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN ||
-               _level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::NOVAL) {
+            if(_level->getTile(e->getPos().x, e->getPos().y).getTileStatus() == TileStatus::BROKEN ||
+               _level->getTile(e->getPos().x, e->getPos().y).getTileStatus() == TileStatus::NOVAL) {
                 e->hurt(99);
             }
             // Entity removal
@@ -383,6 +384,14 @@ void GameState::render() {
     smallText->draw(4, 21);
     smallText->setString("moves: " + std::to_string(_moves));
     smallText->draw(4, 31);
+
+    if(_gameOver) {
+        Text* medText = getText(TextSize::MEDIUM);
+        medText->setString("GAME OVER");
+        medText->draw(getGameSize().x / 2 - medText->getWidth() / 2, getGameSize().y / 2 - 20);
+        smallText->setString("press 'R' to restart");
+        smallText->draw(getGameSize().x / 2 - smallText->getWidth() / 2 - 3, getGameSize().y / 2);
+    }
 
     SDL_RenderPresent(getRenderer());
 }
