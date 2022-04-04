@@ -75,6 +75,9 @@ void Level::render(int xOffset, int yOffset) {
 // Fills level with all healthy ground tiles and a few snow tiles here and there
 void Level::fileTilemapWithDefaultLayout() {
     for(size_t i = 0; i < _tilemap.size(); ++i) {
+        int xPos = i % _levelHeight;
+        int yPos = i / _levelHeight;
+        _validSpawnTiles.push_back({xPos, yPos});
         _tilemap[i].setTileType(TileType::ICE);
         _tilemap[i].setTileStatus(TileStatus::HEALTHY);
     }
@@ -109,6 +112,26 @@ void Level::setTile(int x, int y, Tile tile) {
         std::cout << "Error: attempting to set tile out of bounds at " << x << ", " << y << std::endl;
     }
     else {
+        if(tile.getTileStatus() == TileStatus::BROKEN) {
+            for(auto it = _validSpawnTiles.begin(); it != _validSpawnTiles.end(); ++it) {
+                if(it->x == x && it->y == y) {
+                    _validSpawnTiles.erase(it);
+                    break;
+                }
+            }
+        }
+        else if(tile.getTileType() != TileType::NOVAL && tile.getTileType() != TileType::WALL) {
+            bool tileAlreadyValid = false;
+            for(auto it = _validSpawnTiles.begin(); it != _validSpawnTiles.end(); ++it) {
+                if(it->x == x && it->y == y) {
+                    tileAlreadyValid = true;
+                    break;
+                }
+            }
+            if(!tileAlreadyValid) {
+                _validSpawnTiles.push_back({x, y});
+            }
+        }
         int index = y * _levelWidth + x;
         _tilemap[index] = tile;
     }
@@ -172,6 +195,10 @@ int Level::getTileSize() {
 
 SDL_Point Level::getRenderPos() {
     return _renderPos;
+}
+
+std::vector<SDL_Point> Level::getValidSpawnTiles() {
+    return _validSpawnTiles;
 }
 
 /**

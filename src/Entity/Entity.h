@@ -53,6 +53,7 @@ public:
     void setCurrentDirection(Direction::Direction dir);
     void setPlayerPos(SDL_Point pos);
     void setMoveNextMovingState(bool move);
+    void setSpawning(bool spawning);
 
     int getEntityId();
     EntityType::EntityType getEntityType();
@@ -74,6 +75,7 @@ public:
     SDL_Point getPosFacing();
     bool requestPush();
     bool moveNextMovingState();
+    bool isSpawning();
 
 protected:
     void setEntityType(EntityType::EntityType type);
@@ -108,6 +110,8 @@ private:
     int _health = 1;
     Weight::Weight _weight = Weight::MEDIUM;
     std::vector<SDL_Point> _pathToPlayer;
+
+    bool _spawning = true;
 
     // Render
     Spritesheet* _spritesheet = nullptr;

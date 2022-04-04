@@ -21,14 +21,13 @@ public:
     void handleKeyboardInput(SDL_Event e) override {};
 
 private:
-    void startMovingState(int moveSpeed);
+    void startMovingState(float moveSpeed);
     void tickBombTimers();
     void addEnemySpawn();
-    void shoveEntity(Entity* shovingEntity, Entity* shovedEntity);
 
-    const int DEFAULT_MOVE_SPEED = 4;
-    const int DEFAULT_SHOVE_SPEED = 12;
-    const int DEFAULT_SPAWN_SPEED = 1;
+    const float DEFAULT_MOVE_SPEED = 4.f;
+    const float DEFAULT_SHOVE_SPEED = 12.f;
+    const float DEFAULT_SPAWN_SPEED = 0.8f;
 
     std::unique_ptr<Keyboard> _keyboard = nullptr;
 
@@ -42,7 +41,7 @@ private:
 
     float _moveTimer = 0;
     // 1 / _moveSpeed = time in seconds (for instance _moveSpeed = 4 means 0.25 sec move time)
-    int _moveSpeed = 4;
+    float _moveSpeed = 4;
 
     bool _gameOver = false;
 
@@ -62,6 +61,14 @@ private:
     const int SHOVE_KILL_SCORE = 2000;
     const int BOMB_KILL_SCORE = 3000;
     const int REBUILD_SCORE = 1500;
+
+    int _movesSinceLastEnemySpawn = 0;
+    int _currentSpawnWaitTime = 0;
+    const int MIN_MOVES_BETWEEN_SPAWNS = 5;
+    const int MAX_MOVES_BETWEEN_SPAWNS = 10;
+    const int GRUNT_SPAWN_CHANCE = 4;
+    const int BISHOP_SPAWN_CHANCE = 3;
+    const int TANK_SPAWN_CHANCE = 1;
 };
 
 #endif

@@ -3,6 +3,7 @@
 Bishop::Bishop() {
     setEntityType(EntityType::BISHOP);
     setWeight(Weight::LIGHT);
+    setCurrentDirection(Direction::SOUTHEAST);
     _needsPathToPlayer = true;
 }
 
@@ -18,14 +19,19 @@ void Bishop::onPlayerAction() {
 void Bishop::render(int xOffset, int yOffset) {
     Spritesheet* ss = getShadowSpritesheet();
     ss->setTileIndex(0, 0);
-    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset);
+    if(isSpawning()) {
+        ss->render(getRenderPos().x + xOffset, getPos().y * TILE_SIZE - TILE_SIZE / 4 + yOffset);
+    }
+    else {
+        ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset);
+    }
 
     ss = getSpritesheet();
     int yIndex = 0;
     int xIndex = 0;
     bool spriteFlip = (getCurrentDirection() == Direction::NORTHWEST ||
         getCurrentDirection() == Direction::SOUTHWEST);
-    if(moveNextMovingState()) {
+    if(moveNextMovingState() && !isSpawning()) {
         xIndex = SDL_GetTicks() / MS_BETWEEN_WALK_FRAMES % NUM_OF_WALK_FRAMES;
         if(getCurrentDirection() == Direction::SOUTHEAST ||
             getCurrentDirection() == Direction::SOUTHWEST) {

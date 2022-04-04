@@ -18,13 +18,18 @@ void Grunt::onPlayerAction() {
 void Grunt::render(int xOffset, int yOffset) {
     Spritesheet* ss = getShadowSpritesheet();
     ss->setTileIndex(0, 0);
-    ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset + 1);
+    if(isSpawning()) {
+        ss->render(getRenderPos().x + xOffset, getPos().y * TILE_SIZE - TILE_SIZE / 4 + yOffset + 1);
+    }
+    else {
+        ss->render(getRenderPos().x + xOffset, getRenderPos().y + yOffset + 1);
+    }
 
     ss = getSpritesheet();
     int yIndex = 0;
     int xIndex = 0;
     bool spriteFlip = (getCurrentDirection() == Direction::WEST);
-    if(moveNextMovingState()) {
+    if(moveNextMovingState() && !isSpawning()) {
         xIndex = SDL_GetTicks() / MS_BETWEEN_WALK_FRAMES % NUM_OF_WALK_FRAMES;
         if(getCurrentDirection() == Direction::SOUTH) {
             yIndex = 3;

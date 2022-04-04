@@ -44,34 +44,8 @@ void GameState::init() {
     _player->setKeyboard(_keyboard.get());
     _player->setAudioPlayer(getAudioPlayer());
 
-    // Entites
-    _entityList.push_back(std::make_unique<Grunt>());
-    _entityList.back()->setPos(7, 8);
-    _entityList.back()->setLastPos(7, 8);
-    _entityList.back()->setRenderPos(7 * _level->getTileSize(), 8 * _level->getTileSize());
-    _entityList.back()->setAudioPlayer(getAudioPlayer());
-    _entityList.push_back(std::make_unique<Bishop>());
-    _entityList.back()->setPos(2, 2);
-    _entityList.back()->setLastPos(2, 2);
-    _entityList.back()->setRenderPos(2 * _level->getTileSize(), 2 * _level->getTileSize());
-    _entityList.back()->setAudioPlayer(getAudioPlayer());
-    _entityList.push_back(std::make_unique<Tank>());
-    _entityList.back()->setPos(6, 2);
-    _entityList.back()->setLastPos(6, 2);
-    _entityList.back()->setRenderPos(6 * _level->getTileSize(), 2 * _level->getTileSize());
-    _entityList.back()->setAudioPlayer(getAudioPlayer());
-
     // Spritesheet and other init stuff for entities
     for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
-        it->get()->setPlayerPos(_player->getPos());
-        if(it->get()->needsPathToPlayer()) {
-            if(it->get()->getEntityType() == EntityType::BISHOP) {
-                it->get()->setPathToPlayer(_collisionDetector.diagonalBreadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get()));
-            }
-            else {
-                it->get()->setPathToPlayer(_collisionDetector.breadthFirstSearch(it->get()->getPos(), _player->getPos(), _level.get()));
-            }
-        }
         switch(it->get()->getEntityType()) {
             case EntityType::GRUNT:
                 it->get()->setSpritesheet(getSpritesheet("GRUNT"));
@@ -93,9 +67,15 @@ void GameState::tick(float timescale) {
     // Reset
     if(_keyboard->isKeyPressed(SDL_SCANCODE_R)) setNextState(new GameState());
 
+    // Enemy spawning
+    if(_movesSinceLastEnemySpawn >= _currentSpawnWaitTime || _entityList.empty()) {
+        _spawnEnemy = true;
+        _inMovingState = true;
+    }
+
     // Move state
     if(_inMovingState) {
-        _moveTimer += timescale * (float) _moveSpeed;
+        _moveTimer += timescale * _moveSpeed;
         if(_moveTimer >= 1) {
             _inMovingState = false;
             _moveTimer = 1.f;
@@ -117,6 +97,7 @@ void GameState::tick(float timescale) {
                 e->setRenderPos((e->getLastPos().x + _moveTimer * eDx) * _level->getTileSize(),
                     (e->getLastPos().y + _moveTimer * eDy) * _level->getTileSize());
                 e->setMoveNextMovingState(_inMovingState);
+                if(e->isSpawning()) e->setSpawning(_inMovingState);
             }
         }
         // Player got shoved
@@ -230,6 +211,7 @@ void GameState::tick(float timescale) {
                     if(_level->getTile(_player->getPos().x, _player->getPos().y).getTileStatus() == TileStatus::BROKEN) return;
                     tickBombTimers();
                     ++_moves;
+                    ++_movesSinceLastEnemySpawn;
                 }
             }
             
@@ -405,7 +387,7 @@ void GameState::render() {
     SDL_RenderPresent(getRenderer());
 }
 
-void GameState::startMovingState(int moveSpeed) {
+void GameState::startMovingState(float moveSpeed) {
     _inMovingState = true;
     _moveTimer = 0;
     _moveSpeed = moveSpeed;
@@ -418,9 +400,57 @@ void GameState::tickBombTimers() {
 }
 
 void GameState::addEnemySpawn() {
-    // TODO: enemy spawn stuff
-}
+    _movesSinceLastEnemySpawn = 0;
+    _currentSpawnWaitTime = RandomGen::getRandomInt(MIN_MOVES_BETWEEN_SPAWNS, MAX_MOVES_BETWEEN_SPAWNS);
+    int spawnIndex = RandomGen::getRandomInt(0, _level->getValidSpawnTiles().size() - 1);
+    SDL_Point spawnPoint = {spawnIndex % _level->getHeight(), spawnIndex / _level->getHeight()};
+    int randomCount = 0;
+    while(_level->getTile(spawnPoint.x, spawnPoint.y).isEntityOnTile()) {
+        int spawnIndex = RandomGen::getRandomInt(0, _level->getValidSpawnTiles().size() - 1);
+        SDL_Point spawnPoint = {spawnIndex % _level->getHeight(), spawnIndex / _level->getHeight()};
+        ++randomCount;
+        // safeguard cause there's a crash here i can't pinpoint in time
+        if(randomCount > 500) break;
+    }
+    Tile t = _level->getTile(spawnPoint.x, spawnPoint.y);
+    t.setEntityOnTile(true);
+    _level->setTile(spawnPoint.x, spawnPoint.y, t);
 
-void GameState::shoveEntity(Entity* shovingEntity, Entity* shovedEntity) {
-
+    // This can be a lot cleaner (especially with RDS tables) but again... no time!
+    int totalProb = GRUNT_SPAWN_CHANCE + BISHOP_SPAWN_CHANCE + TANK_SPAWN_CHANCE;
+    int probHit = RandomGen::getRandomInt(1, totalProb);
+    if(probHit <= GRUNT_SPAWN_CHANCE || _moves == 0) {
+        _entityList.push_back(std::make_unique<Grunt>());
+        _entityList.back()->setPos(spawnPoint.x, spawnPoint.y);
+        _entityList.back()->setLastPos(spawnPoint.x, spawnPoint.y - 20);
+        _entityList.back()->setRenderPos(spawnPoint.x * _level->getTileSize(), spawnPoint.y * _level->getTileSize() - 320);
+        _entityList.back()->setAudioPlayer(getAudioPlayer());
+        _entityList.back()->setSpritesheet(getSpritesheet("GRUNT"));
+        _entityList.back()->setShadowSpritesheet(getSpritesheet("SHADOW"));
+        _entityList.back()->setPlayerPos(_player->getPos());
+        _entityList.back()->setPathToPlayer(_collisionDetector.breadthFirstSearch(_entityList.back()->getPos(), _player->getPos(), _level.get()));
+        _entityList.back()->setMoveNextMovingState(true);
+    }
+    else if(probHit <= GRUNT_SPAWN_CHANCE + BISHOP_SPAWN_CHANCE) {
+        _entityList.push_back(std::make_unique<Bishop>());
+        _entityList.back()->setPos(spawnPoint.x, spawnPoint.y);
+        _entityList.back()->setLastPos(spawnPoint.x, spawnPoint.y - 20);
+        _entityList.back()->setRenderPos(spawnPoint.x * _level->getTileSize(), spawnPoint.y * _level->getTileSize() - 320);
+        _entityList.back()->setAudioPlayer(getAudioPlayer());
+        _entityList.back()->setSpritesheet(getSpritesheet("BISHOP"));
+        _entityList.back()->setShadowSpritesheet(getSpritesheet("SHADOW"));
+        _entityList.back()->setPathToPlayer(_collisionDetector.diagonalBreadthFirstSearch(_entityList.back()->getPos(), _player->getPos(), _level.get()));
+        _entityList.back()->setMoveNextMovingState(true);
+    }
+    else if(probHit <= GRUNT_SPAWN_CHANCE + BISHOP_SPAWN_CHANCE + TANK_SPAWN_CHANCE) {
+        _entityList.push_back(std::make_unique<Tank>());
+        _entityList.back()->setPos(spawnPoint.x, spawnPoint.y);
+        _entityList.back()->setLastPos(spawnPoint.x, spawnPoint.y - 20);
+        _entityList.back()->setRenderPos(spawnPoint.x * _level->getTileSize(), spawnPoint.y * _level->getTileSize() - 320);
+        _entityList.back()->setAudioPlayer(getAudioPlayer());
+        _entityList.back()->setSpritesheet(getSpritesheet("TANK"));
+        _entityList.back()->setShadowSpritesheet(getSpritesheet("SHADOW"));
+        _entityList.back()->setPathToPlayer(_collisionDetector.breadthFirstSearch(_entityList.back()->getPos(), _player->getPos(), _level.get()));
+        _entityList.back()->setMoveNextMovingState(true);
+    }
 }

@@ -28,6 +28,7 @@ public:
     Tile getTile(int x, int y);
     int getTileSize();
     SDL_Point getRenderPos();
+    std::vector<SDL_Point> getValidSpawnTiles();
 
 private:
     SDL_Point getTileIndexForTileType(TileType::TileType type);
@@ -43,6 +44,8 @@ private:
     std::vector<Tile> _tilemap;
     // The rendering size of the tiles
     int _tileSize = 16;
+    // What tiles can be spawned on (aka non broken tiles)
+    std::vector<SDL_Point> _validSpawnTiles;
 
     SDL_Point _renderPos = {0, 0};
 

@@ -2,6 +2,7 @@
 
 Player::Player() {
     setEntityType(EntityType::PLAYER);
+    setSpawning(false);
 }
 
 void Player::tick(float timescale) {

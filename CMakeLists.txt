@@ -43,6 +43,7 @@ set(SOURCES
     ${PROJECT_SOURCE_DIR}/src/States/State.cpp
     ${PROJECT_SOURCE_DIR}/src/States/GameState.cpp
     ${PROJECT_SOURCE_DIR}/src/Engine/Input/Keyboard.cpp
+    ${PROJECT_SOURCE_DIR}/src/Engine/RandomUtilities/RandomGen.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Entity.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Player/Player.cpp
     ${PROJECT_SOURCE_DIR}/src/Entity/Enemies/Grunt.cpp

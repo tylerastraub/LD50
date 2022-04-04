@@ -67,7 +67,6 @@ void Entity::move(std::vector<SDL_Point> path) {
         }
     }
     else if(dy != 0) {
-        std::cout << "Entity Type " << _type << " with dy " << dy << std::endl;
         if(dy < 0) {
             _currentDirection = Direction::NORTH;
         }
@@ -157,6 +156,10 @@ void Entity::setPlayerPos(SDL_Point pos) {
 
 void Entity::setMoveNextMovingState(bool move) {
     _moveNextMovingState = move;
+}
+
+void Entity::setSpawning(bool spawning) {
+    _spawning = spawning;
 }
 
 int Entity::getEntityId() {
@@ -256,4 +259,8 @@ bool Entity::requestPush() {
 
 bool Entity::moveNextMovingState() {
     return _moveNextMovingState;
+}
+
+bool Entity::isSpawning() {
+    return _spawning;
 }
