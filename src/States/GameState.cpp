@@ -8,8 +8,6 @@
 
 /**
  * TODO:
- * - Add death sound (falling)
- * - Add powerup sound for shove kills
  * - Refine HUD more
  * EXTRAS: (if have time)
  * - Fix bug where bomb can be placed on damaged tile then stays after tile gets broken
@@ -299,7 +297,9 @@ void GameState::tick(float timescale) {
                 std::vector<Entity*> shovedEntities;
                 shovedEntities.push_back(e);
                 e->setDelta(dx, dy);
-                while(_level->getTile(nextPos.x, nextPos.y).isEntityOnTile()) {
+                int loopCount = 0;
+                // Don't have time to figure out why this sometimes hangs, 500 iteration limit will have to do
+                while(_level->getTile(nextPos.x, nextPos.y).isEntityOnTile() && loopCount < 500) {
                     // Again horribly unoptimized but we don't got much time
                     for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
                         Entity* se = it->get();
@@ -313,6 +313,7 @@ void GameState::tick(float timescale) {
                             nextPos = {se->getPos().x + dx, se->getPos().y + dy};
                         }
                     }
+                    ++loopCount;
                 }
                 int combo = 1;
                 for(auto se : shovedEntities) {

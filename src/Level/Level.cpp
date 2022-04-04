@@ -158,6 +158,7 @@ void Level::addTileEvent(Entity* e, TileEvent::TileEvent event) {
             Tile t = getTile(p.x, p.y);
             if(t.getTileStatus() == TileStatus::BROKEN) {
                 t.setTileStatus(TileStatus::HEALTHY);
+                t.setEntityOnTile(false);
             }
             setTile(p.x, p.y, t);
             break;
