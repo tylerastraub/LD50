@@ -136,7 +136,11 @@ void GameState::tick(float timescale) {
                         t.setTileEvent(TileEvent::NOVAL);
                         _level->setTile(b->getPos().x, b->getPos().y, t);
                         int combo = 1;
-                        if(t.isEntityOnTile()) {
+                        if(_player->getPos().x == b->getPos().x && _player->getPos().y == b->getPos().y) {
+                            _player->hurt(3);
+                            t.setEntityOnTile(false);
+                        }
+                        else if(t.isEntityOnTile()) {
                             for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
                                 auto e = it->get();
                                 if(e->getPos().x == b->getPos().x && e->getPos().y == b->getPos().y) {
@@ -153,7 +157,11 @@ void GameState::tick(float timescale) {
                         for(auto p : b->getSurroundingPoints()) {
                             t = _level->getTile(p.x, p.y);
                             if(t.canBeDamaged()) t.damageTile(1);
-                            if(t.isEntityOnTile()) {
+                            if(_player->getPos().x == p.x && _player->getPos().y == p.y) {
+                                _player->hurt(3);
+                                t.setEntityOnTile(false);
+                            }
+                            else if(t.isEntityOnTile()) {
                                 for(auto it = _entityList.begin(); it != _entityList.end(); ++it) {
                                     auto e = it->get();
                                     if(e->getPos().x == p.x && e->getPos().y == p.y) {
